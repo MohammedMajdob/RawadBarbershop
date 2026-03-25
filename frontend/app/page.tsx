@@ -74,12 +74,16 @@ export default function Home() {
     if (!holdId) return;
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://backend-production-1b38.up.railway.app/api';
+    const releaseUrl = `${apiUrl}/booking/hold/${holdId}/release`;
 
+    // Use both fetch+keepalive AND sendBeacon for maximum reliability
     const sendRelease = () => {
-      const url = `${apiUrl}/booking/hold/${holdId}/release`;
-      // sendBeacon is the most reliable way to send data on page exit
-      if (navigator.sendBeacon) {
-        navigator.sendBeacon(url);
+      try {
+        // fetch with keepalive survives page close and respects CORS
+        fetch(releaseUrl, { method: 'POST', keepalive: true }).catch(() => {});
+      } catch {
+        // Fallback: sendBeacon (doesn't always work with CORS)
+        try { navigator.sendBeacon(releaseUrl); } catch {}
       }
     };
 
@@ -87,10 +91,7 @@ export default function Home() {
     const handleBeforeUnload = () => sendRelease();
 
     // Mobile: more reliable than beforeunload on iOS/Android
-    const handlePageHide = (e: PageTransitionEvent) => {
-      // Only release if page is actually being discarded (not bfcache)
-      if (!e.persisted) sendRelease();
-    };
+    const handlePageHide = () => sendRelease();
 
     // Mobile/Desktop: user switches to another tab or app
     let releasedWhileHidden = false;
@@ -100,7 +101,7 @@ export default function Home() {
         sendRelease();
         releasedWhileHidden = true;
       } else if (document.visibilityState === 'visible' && releasedWhileHidden) {
-        // User came back — hold was released on server, reset booking to time selection
+        // User came back — hold was released on server, reset to time selection
         releasedWhileHidden = false;
         setHoldId(null);
         setHoldExpiresAt(null);

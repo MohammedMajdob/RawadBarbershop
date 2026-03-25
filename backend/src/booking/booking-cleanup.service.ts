@@ -8,7 +8,7 @@ export class BookingCleanupService {
 
   constructor(private prisma: PrismaService) {}
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
+  @Cron(CronExpression.EVERY_MINUTE)
   async cleanExpiredBookings() {
     // Delete expired holds (temporary slot locks) — they are not real bookings
     const deletedHolds = await this.prisma.booking.deleteMany({
