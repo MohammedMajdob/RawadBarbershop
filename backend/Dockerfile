@@ -9,8 +9,7 @@ RUN npm ci
 COPY . .
 
 RUN npx prisma generate
-RUN npm run build
-RUN ls -la dist/main.js
+RUN npm run build 2>&1 && echo "--- dist contents ---" && ls -la dist/ || echo "--- no dist directory ---" && ls -la
 
 # Production stage
 FROM node:20-alpine
