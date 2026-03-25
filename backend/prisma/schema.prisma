@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+model Booking {
+  id         String        @id @default(uuid())
+  name       String
+  phone      String
+  date       String        // YYYY-MM-DD
+  time       String        // HH:mm
+  status     BookingStatus @default(PENDING)
+  otpCode    String?
+  otpExpiry  DateTime?
+  expiresAt  DateTime      // PENDING booking expiry
+  customerId String?
+  customer   Customer?     @relation(fields: [customerId], references: [id])
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@index([date])
+  @@index([status])
+  @@index([customerId])
+  @@index([date, time, status])
+}
+
+model Settings {
+  id                 String   @id @default("default")
+  businessName       String   @default("Gentlemen Barber Shop")
+  phone              String   @default("050-2763455")
+  price              Int      @default(70)
+  duration           Int      @default(30) // minutes
+  advanceBookingDays Int      @default(7)  // how many days ahead customers can book
+  schedule           Json?    // per-day schedule: { "0": { "isOpen": false, "ranges": [] }, "3": { "isOpen": true, "ranges": [{"start":"09:00","end":"17:00"}] } }
+  blockedDates       String[] @default([])
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model AdminUser {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+}
+
+model Customer {
+  id        String    @id @default(uuid())
+  phone     String    @unique
+  name      String?
+  bookings  Booking[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([phone])
+}
+
+model HeroImage {
+  id        String   @id @default(uuid())
+  url       String
+  title     String?
+  order     Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}

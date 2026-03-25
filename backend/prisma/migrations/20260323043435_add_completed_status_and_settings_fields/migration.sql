@@ -1,0 +1,8 @@
+-- AlterEnum
+ALTER TYPE "BookingStatus" ADD VALUE 'COMPLETED';
+
+-- AlterTable
+ALTER TABLE "Settings" ADD COLUMN     "businessName" TEXT NOT NULL DEFAULT 'Gentlemen Barber Shop',
+ADD COLUMN     "duration" INTEGER NOT NULL DEFAULT 30,
+ADD COLUMN     "phone" TEXT NOT NULL DEFAULT '050-2763455',
+ADD COLUMN     "price" INTEGER NOT NULL DEFAULT 70;
