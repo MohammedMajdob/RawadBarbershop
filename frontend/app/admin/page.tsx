@@ -13,6 +13,7 @@ import {
   addHeroImage,
   toggleHeroImage,
   deleteHeroImage,
+  uploadImage,
 } from '@/lib/api';
 
 const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
@@ -80,8 +81,9 @@ export default function AdminPage() {
   const [newBlockedDate, setNewBlockedDate] = useState('');
   const [filterDate, setFilterDate] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
-  const [newHeroUrl, setNewHeroUrl] = useState('');
+  const [newHeroFile, setNewHeroFile] = useState<File | null>(null);
   const [newHeroTitle, setNewHeroTitle] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -253,14 +255,18 @@ export default function AdminPage() {
   };
 
   const handleAddHeroImage = async () => {
-    if (!newHeroUrl) return;
+    if (!newHeroFile) return;
+    setUploading(true);
     try {
-      await addHeroImage(token, newHeroUrl, newHeroTitle || undefined);
-      setNewHeroUrl('');
+      const { url } = await uploadImage(token, newHeroFile);
+      await addHeroImage(token, url, newHeroTitle || undefined);
+      setNewHeroFile(null);
       setNewHeroTitle('');
       loadHeroImages();
     } catch (e) {
       console.error(e);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -746,14 +752,17 @@ export default function AdminPage() {
             <div className="bg-card rounded-2xl p-5 border border-border">
               <h3 className="font-bold text-foreground mb-4">הוספת תמונה</h3>
               <div className="space-y-3">
-                <input
-                  type="text"
-                  value={newHeroUrl}
-                  onChange={(e) => setNewHeroUrl(e.target.value)}
-                  placeholder="קישור לתמונה (URL)"
-                  className="w-full px-3 py-2.5 border-2 border-border rounded-xl outline-none focus:border-primary text-sm bg-card transition-colors"
-                  dir="ltr"
-                />
+                <label className="block w-full cursor-pointer">
+                  <div className="w-full px-3 py-4 border-2 border-dashed border-border rounded-xl text-center text-sm text-muted hover:border-primary transition-colors">
+                    {newHeroFile ? newHeroFile.name : 'לחץ לבחירת תמונה'}
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => setNewHeroFile(e.target.files?.[0] || null)}
+                  />
+                </label>
                 <input
                   type="text"
                   value={newHeroTitle}
@@ -763,10 +772,10 @@ export default function AdminPage() {
                 />
                 <button
                   onClick={handleAddHeroImage}
-                  disabled={!newHeroUrl}
+                  disabled={!newHeroFile || uploading}
                   className="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary-dark transition-colors disabled:opacity-40"
                 >
-                  הוסף תמונה
+                  {uploading ? 'מעלה...' : 'הוסף תמונה'}
                 </button>
               </div>
             </div>

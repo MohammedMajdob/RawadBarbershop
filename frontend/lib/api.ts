@@ -199,6 +199,22 @@ export async function updateAdminSettings(
   });
 }
 
+// Upload
+export async function uploadImage(token: string, file: File): Promise<{ url: string }> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const res = await fetch(`${API_URL}/upload/image`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'שגיאה בהעלאת תמונה');
+  return data;
+}
+
 // Hero Images
 export async function getHeroImages(token: string, includeAll = false) {
   const query = includeAll ? '?all=true' : '';

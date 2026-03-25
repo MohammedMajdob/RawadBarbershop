@@ -7,6 +7,7 @@ import { AvailabilityModule } from './availability/availability.module';
 import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
 import { SmsModule } from './sms/sms.module';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { SmsModule } from './sms/sms.module';
     AdminModule,
     AuthModule,
     SmsModule,
+    UploadModule,
   ],
 })
 export class AppModule {}
