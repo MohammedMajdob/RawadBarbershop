@@ -93,9 +93,20 @@ export default function Home() {
     };
 
     // Mobile/Desktop: user switches to another tab or app
+    let releasedWhileHidden = false;
+
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
         sendRelease();
+        releasedWhileHidden = true;
+      } else if (document.visibilityState === 'visible' && releasedWhileHidden) {
+        // User came back — hold was released on server, reset booking to time selection
+        releasedWhileHidden = false;
+        setHoldId(null);
+        setHoldExpiresAt(null);
+        setStep(1);
+        setSelectedTime('');
+        setToast('השעה שוחררה כי יצאת מהאפליקציה, בחר שעה מחדש');
       }
     };
 
