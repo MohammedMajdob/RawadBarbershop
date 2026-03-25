@@ -45,7 +45,7 @@ export class AvailabilityService {
     const settings = await this.getSettings();
     const schedule = this.getSchedule(settings);
     const duration = settings.duration || 30;
-    const advanceDays = settings.advanceBookingDays || 7;
+    const advanceDays = settings.advanceBookingDays || 14;
 
     // Check if date's day is open (parse as local date to avoid timezone shift)
     const [year, month, day] = date.split('-').map(Number);
@@ -135,7 +135,7 @@ export class AvailabilityService {
   async getAvailableDates() {
     const settings = await this.getSettings();
     const schedule = this.getSchedule(settings);
-    const advanceDays = settings.advanceBookingDays || 7;
+    const advanceDays = settings.advanceBookingDays || 14;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const dates: { date: string; available: boolean }[] = [];

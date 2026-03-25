@@ -19,11 +19,11 @@ const defaultSchedule = {
 async function main() {
   await prisma.settings.upsert({
     where: { id: 'default' },
-    update: { schedule: defaultSchedule, advanceBookingDays: 7 },
+    update: { schedule: defaultSchedule, advanceBookingDays: 14 },
     create: {
       id: 'default',
       schedule: defaultSchedule,
-      advanceBookingDays: 7,
+      advanceBookingDays: 14,
       blockedDates: [],
     },
   });

@@ -9,7 +9,6 @@ COPY . .
 
 RUN npx prisma generate
 RUN npm run build
-RUN ls -la dist/
 
 EXPOSE 3002
 
