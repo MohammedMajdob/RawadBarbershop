@@ -263,8 +263,9 @@ export default function AdminPage() {
       setNewHeroFile(null);
       setNewHeroTitle('');
       loadHeroImages();
-    } catch (e) {
-      console.error(e);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'שגיאה בהעלאת תמונה';
+      alert(msg);
     } finally {
       setUploading(false);
     }
