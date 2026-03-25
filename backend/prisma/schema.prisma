@@ -40,7 +40,7 @@ model Settings {
   phone              String   @default("050-2763455")
   price              Int      @default(70)
   duration           Int      @default(30) // minutes
-  advanceBookingDays Int      @default(7)  // how many days ahead customers can book
+  advanceBookingDays Int      @default(14) // how many days ahead customers can book
   schedule           Json?    // per-day schedule: { "0": { "isOpen": false, "ranges": [] }, "3": { "isOpen": true, "ranges": [{"start":"09:00","end":"17:00"}] } }
   blockedDates       String[] @default([])
   createdAt          DateTime @default(now())
