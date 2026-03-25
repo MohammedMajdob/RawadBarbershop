@@ -13,4 +13,4 @@ RUN ls -la dist/
 
 EXPOSE 3002
 
-CMD ["sh", "-c", "npx prisma migrate deploy --config prisma.config.ts && node dist/main"]
+CMD ["sh", "-c", "npx prisma migrate deploy --config prisma.config.ts && node dist/src/main"]
