@@ -254,11 +254,34 @@ export default function AdminPage() {
     }
   };
 
+  const compressImage = (file: File, maxWidth = 1200): Promise<File> => {
+    return new Promise((resolve) => {
+      const img = new window.Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const scale = Math.min(1, maxWidth / img.width);
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(
+          (blob) => {
+            resolve(new File([blob!], file.name, { type: 'image/jpeg' }));
+          },
+          'image/jpeg',
+          0.8,
+        );
+      };
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   const handleAddHeroImage = async () => {
     if (!newHeroFile) return;
     setUploading(true);
     try {
-      const { url } = await uploadImage(token, newHeroFile);
+      const compressed = await compressImage(newHeroFile);
+      const { url } = await uploadImage(token, compressed);
       await addHeroImage(token, url, newHeroTitle || undefined);
       setNewHeroFile(null);
       setNewHeroTitle('');
