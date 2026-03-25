@@ -93,9 +93,9 @@ export class AvailabilityService {
     // Sort slots
     allSlots.sort();
 
-    // Get confirmed bookings (fully booked)
+    // Get confirmed + completed bookings (both block the slot)
     const confirmedSlots = await this.prisma.booking.findMany({
-      where: { date, status: 'CONFIRMED' },
+      where: { date, status: { in: ['CONFIRMED', 'COMPLETED'] } },
       select: { time: true },
     });
     const confirmedTimes = new Set(confirmedSlots.map((b) => b.time));

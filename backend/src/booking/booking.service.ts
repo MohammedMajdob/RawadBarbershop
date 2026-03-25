@@ -31,7 +31,7 @@ export class BookingService {
           date: dto.date,
           time: dto.time,
           OR: [
-            { status: 'CONFIRMED' },
+            { status: { in: ['CONFIRMED', 'COMPLETED'] } },
             { status: 'PENDING', expiresAt: { gt: new Date() } },
           ],
         },
@@ -99,7 +99,7 @@ export class BookingService {
           date: dto.date,
           time: dto.time,
           OR: [
-            { status: 'CONFIRMED' },
+            { status: { in: ['CONFIRMED', 'COMPLETED'] } },
             { status: 'PENDING', expiresAt: { gt: new Date() } },
           ],
         },
@@ -195,7 +195,7 @@ export class BookingService {
         where: {
           date: booking.date,
           time: booking.time,
-          status: 'CONFIRMED',
+          status: { in: ['CONFIRMED', 'COMPLETED'] },
         },
       });
 
@@ -266,7 +266,7 @@ export class BookingService {
           date: dto.date,
           time: dto.time,
           OR: [
-            { status: 'CONFIRMED' },
+            { status: { in: ['CONFIRMED', 'COMPLETED'] } },
             { status: 'PENDING', expiresAt: { gt: new Date() } },
           ],
         },
@@ -401,7 +401,7 @@ export class BookingService {
           time: dto.time,
           id: { not: bookingId },
           OR: [
-            { status: 'CONFIRMED' },
+            { status: { in: ['CONFIRMED', 'COMPLETED'] } },
             { status: 'PENDING', expiresAt: { gt: new Date() } },
           ],
         },
