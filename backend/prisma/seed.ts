@@ -6,20 +6,29 @@ import * as bcrypt from 'bcrypt';
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
 
+// Sunday=0 through Saturday=6
 const defaultSchedule = {
-  '0': { isOpen: false, ranges: [] },
-  '1': { isOpen: false, ranges: [] },
-  '2': { isOpen: false, ranges: [] },
-  '3': { isOpen: true, ranges: [{ start: '09:00', end: '17:00' }] },
-  '4': { isOpen: false, ranges: [] },
-  '5': { isOpen: false, ranges: [] },
-  '6': { isOpen: false, ranges: [] },
+  '0': { isOpen: true, ranges: [{ start: '09:00', end: '20:00' }] },  // ראשון
+  '1': { isOpen: true, ranges: [{ start: '09:00', end: '20:00' }] },  // שני
+  '2': { isOpen: true, ranges: [{ start: '09:00', end: '20:00' }] },  // שלישי
+  '3': { isOpen: true, ranges: [{ start: '09:00', end: '20:00' }] },  // רביעי
+  '4': { isOpen: true, ranges: [{ start: '09:00', end: '20:00' }] },  // חמישי
+  '5': { isOpen: true, ranges: [{ start: '09:00', end: '14:00' }] },  // שישי
+  '6': { isOpen: false, ranges: [] },                                   // שבת
 };
 
 async function main() {
+  // ── Reset: clear all bookings and customers ──
+  await prisma.booking.deleteMany({});
+  console.log('🗑️  כל התורים נמחקו');
+
+  await prisma.customer.deleteMany({});
+  console.log('🗑️  כל הלקוחות נמחקו');
+
+  // ── Settings with working schedule ──
   await prisma.settings.upsert({
     where: { id: 'default' },
-    update: { schedule: defaultSchedule, advanceBookingDays: 14 },
+    update: { schedule: defaultSchedule, advanceBookingDays: 14, blockedDates: [] },
     create: {
       id: 'default',
       schedule: defaultSchedule,
@@ -27,12 +36,13 @@ async function main() {
       blockedDates: [],
     },
   });
-  console.log('✅ הגדרות ברירת מחדל נוצרו');
+  console.log('✅ הגדרות ולוח זמנים נוצרו (ראשון-חמישי 09:00-20:00, שישי 09:00-14:00)');
 
+  // ── Admin user ──
   const hashedPassword = await bcrypt.hash('admin123', 10);
   await prisma.adminUser.upsert({
     where: { username: 'admin' },
-    update: {},
+    update: { password: hashedPassword },
     create: {
       username: 'admin',
       password: hashedPassword,

@@ -137,6 +137,11 @@ export class AvailabilityService {
         expiresAt: heldMap.get(time)?.toISOString() || null,
       }));
 
+    // If today and all slots are gone, show "closed" message
+    if (isToday && slots.length === 0) {
+      return { date, slots: [], message: 'המספרה סגורה כרגע, כל השעות להיום עברו' };
+    }
+
     return { date, slots };
   }
 
@@ -148,6 +153,9 @@ export class AvailabilityService {
     today.setHours(0, 0, 0, 0);
     const dates: { date: string; available: boolean }[] = [];
 
+    const now = new Date();
+    const duration = settings.duration || 30;
+
     for (let i = 0; i <= advanceDays; i++) {
       const d = new Date(today.getTime() + i * 24 * 60 * 60 * 1000);
       const dateStr = d.toLocaleDateString('en-CA'); // YYYY-MM-DD local
@@ -157,9 +165,23 @@ export class AvailabilityService {
       const isOpen = daySchedule?.isOpen && daySchedule.ranges.length > 0;
       const isBlocked = (settings.blockedDates || []).includes(dateStr);
 
+      let available = isOpen && !isBlocked;
+
+      // For today: check if there are still future time slots
+      if (available && i === 0) {
+        const lastRange = daySchedule.ranges[daySchedule.ranges.length - 1];
+        const [endH, endM] = lastRange.end.split(':').map(Number);
+        const lastSlotMinutes = (endH * 60 + endM) - duration;
+        const lastSlotTime = new Date(now);
+        lastSlotTime.setHours(Math.floor(lastSlotMinutes / 60), lastSlotMinutes % 60, 0, 0);
+        if (now >= lastSlotTime) {
+          available = false; // All slots for today have passed
+        }
+      }
+
       dates.push({
         date: dateStr,
-        available: isOpen && !isBlocked,
+        available,
       });
     }
 
