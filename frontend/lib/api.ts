@@ -25,6 +25,11 @@ export async function getAvailableSlots(date: string) {
   return fetchApi(`/availability?date=${date}`);
 }
 
+// Public hero images
+export async function getPublicHeroImages() {
+  return fetchApi('/availability/hero');
+}
+
 // Slot hold
 export async function holdSlot(data: { date: string; time: string }) {
   return fetchApi('/booking/hold', {

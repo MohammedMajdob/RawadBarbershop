@@ -21,6 +21,7 @@ import {
   rescheduleMyBooking,
   holdSlot,
   releaseHold,
+  getPublicHeroImages,
 } from '@/lib/api';
 
 interface CustomerProfile {
@@ -52,6 +53,12 @@ export default function Home() {
   const [token, setToken] = useState<string | null>(null);
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
+
+  // Hero images from DB
+  const [heroImages, setHeroImages] = useState<{ id: string; url: string; title?: string }[]>([]);
+  useEffect(() => {
+    getPublicHeroImages().then(setHeroImages).catch(() => {});
+  }, []);
 
   // Tab navigation - always visible
   const [activeTab, setActiveTab] = useState<ActiveTab>('booking');
@@ -292,10 +299,7 @@ export default function Home() {
     <>
       {/* Promotions Slider */}
       <div className="px-4 py-3 bg-white">
-        <HeroSlider images={[
-          { id: '1', url: '/promo1.jpg', title: 'מבצע תספורת + זקן ₪100' },
-          { id: '2', url: '/promo2.jpg', title: 'הנחה לסטודנטים 20%' },
-        ]} />
+        <HeroSlider images={heroImages} />
       </div>
 
       {/* Stepper */}
