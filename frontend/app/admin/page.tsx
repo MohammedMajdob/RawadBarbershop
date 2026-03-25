@@ -89,8 +89,9 @@ export default function AdminPage() {
     try {
       const result = await adminLogin(username, password);
       setToken(result.accessToken);
-    } catch {
-      setLoginError('שם משתמש או סיסמה שגויים');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'שגיאה לא ידועה';
+      setLoginError(msg);
     }
   };
 
