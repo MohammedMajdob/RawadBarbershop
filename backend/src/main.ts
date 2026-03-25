@@ -6,7 +6,11 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: ['http://localhost:3001', 'http://localhost:3000'],
+    origin: [
+      'http://localhost:3001',
+      'http://localhost:3000',
+      process.env.FRONTEND_URL,
+    ].filter(Boolean),
     credentials: true,
   });
 
@@ -20,7 +24,8 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
-  await app.listen(3002);
-  console.log('🚀 Backend running on http://localhost:3002');
+  const port = process.env.PORT || 3002;
+  await app.listen(port, '0.0.0.0');
+  console.log(`🚀 Backend running on port ${port}`);
 }
 bootstrap();
