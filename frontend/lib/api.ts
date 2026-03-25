@@ -2,12 +2,23 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://backend-production-1
 
 async function fetchApi(endpoint: string, options?: RequestInit) {
   const { headers, ...rest } = options || {};
-  const res = await fetch(`${API_URL}${endpoint}`, {
-    ...rest,
-    headers: { 'Content-Type': 'application/json', ...headers },
-  });
 
-  const data = await res.json();
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${endpoint}`, {
+      ...rest,
+      headers: { 'Content-Type': 'application/json', ...headers },
+    });
+  } catch {
+    throw new Error('שגיאת רשת - בדוק את החיבור');
+  }
+
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error(`שגיאת שרת (${res.status})`);
+  }
 
   if (!res.ok) {
     throw new Error(data.message || 'שגיאה בשרת');
@@ -209,13 +220,24 @@ export async function uploadImage(token: string, file: File): Promise<{ url: str
   const formData = new FormData();
   formData.append('file', file);
 
-  const res = await fetch(`${API_URL}/upload/image`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
-    body: formData,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/upload/image`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+  } catch {
+    throw new Error('שגיאת רשת - נסה שוב');
+  }
 
-  const data = await res.json();
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error(`שגיאת שרת (${res.status})`);
+  }
+
   if (!res.ok) throw new Error(data.message || 'שגיאה בהעלאת תמונה');
   return data;
 }
