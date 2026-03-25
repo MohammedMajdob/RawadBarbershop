@@ -255,6 +255,8 @@ export default function Home() {
       try { await releaseHold(holdId); } catch {}
       setHoldId(null);
       setHoldExpiresAt(null);
+      // Refresh available slots so the released slot shows as free immediately
+      mutate((key: unknown) => typeof key === 'string' && key.startsWith('/availability'));
     }
   };
 
@@ -326,6 +328,7 @@ export default function Home() {
   const goBack = async () => {
     if (step === 2) {
       await doReleaseHold();
+      setSelectedTime(''); // Clear time so user picks fresh
     }
     if (step > 0 && step < 4) setStep(step - 1);
   };
