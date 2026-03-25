@@ -48,7 +48,7 @@ export class BookingService {
           date: dto.date,
           time: dto.time,
           status: 'PENDING',
-          expiresAt: new Date(Date.now() + 120 * 1000), // 120 seconds
+          expiresAt: new Date(Date.now() + 30 * 1000), // 30 seconds
         },
       });
     });
