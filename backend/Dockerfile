@@ -16,13 +16,14 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json tsconfig.json ./
 COPY prisma ./prisma
-RUN npm ci --omit=dev
+COPY prisma.config.ts ./
+RUN npm ci --omit=dev && npm install dotenv tsx
 RUN npx prisma generate
 
 COPY --from=builder /app/dist ./dist
 
 EXPOSE 3002
 
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
+CMD ["sh", "-c", "npx prisma migrate deploy --config prisma.config.ts && node dist/main"]
