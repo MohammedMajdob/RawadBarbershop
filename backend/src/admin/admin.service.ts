@@ -34,7 +34,7 @@ export class AdminService {
 
     return this.prisma.booking.update({
       where: { id },
-      data: { status: 'CANCELLED' },
+      data: { status: 'CANCELLED', cancelledBy: 'admin' },
     });
   }
 

@@ -308,10 +308,12 @@ export class BookingService {
   async getMyBookings(customerId: string) {
     const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD local timezone
 
-    const bookings = await this.prisma.booking.findMany({
+    // Only show active (CONFIRMED) upcoming bookings to customers
+    const upcoming = await this.prisma.booking.findMany({
       where: {
         customerId,
-        status: { in: ['CONFIRMED', 'COMPLETED'] },
+        status: 'CONFIRMED',
+        date: { gte: today },
       },
       orderBy: [{ date: 'asc' }, { time: 'asc' }],
       select: {
@@ -324,11 +326,7 @@ export class BookingService {
       },
     });
 
-    // Split into upcoming and past
-    const upcoming = bookings.filter((b) => b.date >= today);
-    const past = bookings.filter((b) => b.date < today);
-
-    return { upcoming, past };
+    return { upcoming, past: [] };
   }
 
   // ─── Cancel own booking ────────────────────────────────────────
@@ -352,7 +350,7 @@ export class BookingService {
 
     const updated = await this.prisma.booking.update({
       where: { id: bookingId },
-      data: { status: 'CANCELLED' },
+      data: { status: 'CANCELLED', cancelledBy: 'customer' },
     });
 
     return {
@@ -416,10 +414,10 @@ export class BookingService {
       // Cancel old booking
       await tx.booking.update({
         where: { id: bookingId },
-        data: { status: 'CANCELLED' },
+        data: { status: 'CANCELLED', cancelledBy: 'customer' },
       });
 
-      // Create new booking
+      // Create new booking with reschedule tracking
       return tx.booking.create({
         data: {
           name: booking.name,
@@ -428,6 +426,8 @@ export class BookingService {
           time: dto.time,
           status: 'CONFIRMED',
           customerId,
+          rescheduledFromDate: booking.date,
+          rescheduledFromTime: booking.time,
           expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
         },
       });

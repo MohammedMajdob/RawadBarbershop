@@ -8,7 +8,6 @@ import {
   completeBooking,
   getAdminSettings,
   updateAdminSettings,
-  getDashboardStats,
   getHeroImages,
   addHeroImage,
   toggleHeroImage,
@@ -26,6 +25,9 @@ interface Booking {
   date: string;
   time: string;
   status: string;
+  cancelledBy: string | null;
+  rescheduledFromDate: string | null;
+  rescheduledFromTime: string | null;
   createdAt: string;
 }
 
@@ -51,13 +53,6 @@ interface Settings {
   blockedDates: string[];
 }
 
-interface DashboardStats {
-  todayBookings: number;
-  weekBookings: number;
-  cancelledThisWeek: number;
-  totalConfirmed: number;
-}
-
 interface HeroImage {
   id: string;
   url: string;
@@ -72,15 +67,15 @@ export default function AdminPage() {
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'bookings' | 'settings' | 'hero'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'bookings' | 'settings' | 'hero'>('bookings');
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
-  const [stats, setStats] = useState<DashboardStats | null>(null);
   const [heroImages, setHeroImages] = useState<HeroImage[]>([]);
   const [loading, setLoading] = useState(false);
   const [newBlockedDate, setNewBlockedDate] = useState('');
-  const [filterDate, setFilterDate] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toLocaleDateString('en-CA'));
+  const [bookingView, setBookingView] = useState<'active' | 'completed' | 'cancelled'>('active');
+  const [confirmPopup, setConfirmPopup] = useState<{ type: 'complete' | 'cancel'; booking: Booking } | null>(null);
   const [newHeroFile, setNewHeroFile] = useState<File | null>(null);
   const [newHeroTitle, setNewHeroTitle] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -100,28 +95,19 @@ export default function AdminPage() {
   const loadBookings = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getAdminBookings(token, filterDate || undefined, filterStatus || undefined);
+      const data = await getAdminBookings(token, selectedDate);
       setBookings(data);
     } catch (e) {
       console.error(e);
     } finally {
       setLoading(false);
     }
-  }, [token, filterDate, filterStatus]);
+  }, [token, selectedDate]);
 
   const loadSettings = useCallback(async () => {
     try {
       const data = await getAdminSettings(token);
       setSettings(data);
-    } catch (e) {
-      console.error(e);
-    }
-  }, [token]);
-
-  const loadStats = useCallback(async () => {
-    try {
-      const data = await getDashboardStats(token);
-      setStats(data);
     } catch (e) {
       console.error(e);
     }
@@ -138,31 +124,25 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (token) {
-      loadStats();
       loadBookings();
       loadSettings();
       loadHeroImages();
     }
-  }, [token, loadStats, loadBookings, loadSettings, loadHeroImages]);
+  }, [token, loadBookings, loadSettings, loadHeroImages]);
 
-  const handleCancelBooking = async (id: string) => {
-    if (!confirm('בטוח שברצונך לבטל תור זה?')) return;
+  const handleConfirmAction = async () => {
+    if (!confirmPopup) return;
     try {
-      await cancelBooking(token, id);
+      if (confirmPopup.type === 'cancel') {
+        await cancelBooking(token, confirmPopup.booking.id);
+      } else {
+        await completeBooking(token, confirmPopup.booking.id);
+      }
       loadBookings();
-      loadStats();
     } catch (e) {
       console.error(e);
-    }
-  };
-
-  const handleCompleteBooking = async (id: string) => {
-    try {
-      await completeBooking(token, id);
-      loadBookings();
-      loadStats();
-    } catch (e) {
-      console.error(e);
+    } finally {
+      setConfirmPopup(null);
     }
   };
 
@@ -290,24 +270,20 @@ export default function AdminPage() {
     }
   };
 
-  const statusLabel = (status: string) => {
-    switch (status) {
-      case 'CONFIRMED': return 'מאושר';
-      case 'PENDING': return 'ממתין';
-      case 'COMPLETED': return 'הושלם';
-      case 'CANCELLED': return 'בוטל';
-      default: return status;
-    }
-  };
+  const filteredBookings = bookings
+    .filter((b) => {
+      if (bookingView === 'active') return b.status === 'CONFIRMED';
+      if (bookingView === 'completed') return b.status === 'COMPLETED';
+      if (bookingView === 'cancelled') return b.status === 'CANCELLED';
+      return true;
+    })
+    .sort((a, b) => a.time.localeCompare(b.time));
 
-  const statusColor = (status: string) => {
-    switch (status) {
-      case 'CONFIRMED': return 'bg-green-50 text-green-600';
-      case 'PENDING': return 'bg-yellow-50 text-yellow-600';
-      case 'COMPLETED': return 'bg-blue-50 text-blue-600';
-      case 'CANCELLED': return 'bg-gray-100 text-gray-400';
-      default: return 'bg-gray-100 text-gray-500';
-    }
+  const formatDateHebrew = (dateStr: string) => {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    const dayName = dayNames[date.getDay()];
+    return `יום ${dayName}, ${d}/${m}/${y}`;
   };
 
   // Login
@@ -385,7 +361,7 @@ export default function AdminPage() {
       {/* Tabs */}
       <div className="max-w-5xl mx-auto px-4 mt-6">
         <div className="flex gap-1 p-1 bg-gray-100 rounded-xl w-fit mb-6 overflow-x-auto">
-          {(['dashboard', 'bookings', 'settings', 'hero'] as const).map((tab) => (
+          {(['bookings', 'settings', 'hero'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -395,161 +371,163 @@ export default function AdminPage() {
                   : 'text-muted hover:text-foreground'
               }`}
             >
-              {tab === 'dashboard' ? 'ראשי' : tab === 'bookings' ? 'תורים' : tab === 'settings' ? 'הגדרות' : 'תמונות'}
+              {tab === 'bookings' ? 'תורים' : tab === 'settings' ? 'הגדרות' : 'תמונות'}
             </button>
           ))}
         </div>
 
-        {/* ── Dashboard Tab ── */}
-        {activeTab === 'dashboard' && stats && (
-          <div className="space-y-4 animate-fadeInUp pb-8">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-card rounded-2xl p-5 border border-border text-center">
-                <p className="text-3xl font-black text-primary">{stats.todayBookings}</p>
-                <p className="text-sm text-muted mt-1 font-medium">תורים היום</p>
-              </div>
-              <div className="bg-card rounded-2xl p-5 border border-border text-center">
-                <p className="text-3xl font-black text-blue-500">{stats.weekBookings}</p>
-                <p className="text-sm text-muted mt-1 font-medium">תורים השבוע</p>
-              </div>
-              <div className="bg-card rounded-2xl p-5 border border-border text-center">
-                <p className="text-3xl font-black text-red-400">{stats.cancelledThisWeek}</p>
-                <p className="text-sm text-muted mt-1 font-medium">בוטלו השבוע</p>
-              </div>
-              <div className="bg-card rounded-2xl p-5 border border-border text-center">
-                <p className="text-3xl font-black text-green-500">{stats.totalConfirmed}</p>
-                <p className="text-sm text-muted mt-1 font-medium">סה״כ אושרו</p>
-              </div>
-            </div>
-
-            {/* Quick: Today's bookings */}
-            <div className="bg-card rounded-2xl p-5 border border-border">
-              <h3 className="font-bold text-foreground mb-3">תורים להיום</h3>
-              {bookings.filter(b => b.date === new Date().toLocaleDateString('en-CA') && b.status !== 'CANCELLED').length === 0 ? (
-                <p className="text-muted text-sm">אין תורים להיום</p>
-              ) : (
-                <div className="space-y-2">
-                  {bookings
-                    .filter(b => b.date === new Date().toLocaleDateString('en-CA') && b.status !== 'CANCELLED')
-                    .map((b) => (
-                      <div key={b.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                        <div>
-                          <span className="font-bold text-foreground">{b.name}</span>
-                          <span className="text-muted text-sm mr-2">{b.time}</span>
-                        </div>
-                        <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${statusColor(b.status)}`}>
-                          {statusLabel(b.status)}
-                        </span>
-                      </div>
-                    ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* ── Bookings Tab ── */}
         {activeTab === 'bookings' && (
           <div className="space-y-4 animate-fadeInUp pb-8">
-            {/* Filters */}
+            {/* Date picker + title */}
             <div className="bg-card rounded-2xl p-4 border border-border">
-              <div className="flex gap-3 flex-wrap">
-                <input
-                  type="date"
-                  value={filterDate}
-                  onChange={(e) => setFilterDate(e.target.value)}
-                  className="px-3 py-2 border-2 border-border rounded-xl outline-none focus:border-primary text-sm bg-card transition-colors"
-                />
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="px-3 py-2 border-2 border-border rounded-xl outline-none focus:border-primary text-sm bg-card transition-colors"
-                >
-                  <option value="">כל הסטטוסים</option>
-                  <option value="CONFIRMED">מאושר</option>
-                  <option value="PENDING">ממתין</option>
-                  <option value="COMPLETED">הושלם</option>
-                  <option value="CANCELLED">בוטל</option>
-                </select>
-                <button
-                  onClick={loadBookings}
-                  className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary-dark transition-colors"
-                >
-                  סנן
-                </button>
-                {(filterDate || filterStatus) && (
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <h2 className="text-lg font-bold text-foreground">{formatDateHebrew(selectedDate)}</h2>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="px-3 py-2 border-2 border-border rounded-xl outline-none focus:border-primary text-sm bg-card transition-colors"
+                  />
                   <button
-                    onClick={() => { setFilterDate(''); setFilterStatus(''); }}
-                    className="px-4 py-2 text-muted text-sm font-medium hover:text-foreground transition-colors"
+                    onClick={() => setSelectedDate(new Date().toLocaleDateString('en-CA'))}
+                    className="px-3 py-2 text-xs text-primary font-bold hover:bg-primary/5 rounded-xl transition-colors"
                   >
-                    נקה
+                    היום
                   </button>
-                )}
+                  <button
+                    onClick={loadBookings}
+                    className="text-sm text-primary font-semibold hover:text-primary-dark transition-colors"
+                  >
+                    רענן
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-bold text-foreground">רשימת תורים ({bookings.length})</h2>
-              <button
-                onClick={loadBookings}
-                className="text-sm text-primary font-semibold hover:text-primary-dark transition-colors"
-              >
-                רענן
-              </button>
+            {/* View toggle: active / completed / cancelled */}
+            <div className="flex gap-1 p-1 bg-gray-100 rounded-xl w-fit">
+              {([
+                { key: 'active' as const, label: 'תורים פעילים' },
+                { key: 'completed' as const, label: 'הושלמו' },
+                { key: 'cancelled' as const, label: 'בוטלו' },
+              ]).map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setBookingView(key)}
+                  className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                    bookingView === key
+                      ? 'bg-card text-primary shadow-sm'
+                      : 'text-muted hover:text-foreground'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
 
+            {/* Bookings list */}
             {loading ? (
               <div className="text-center py-16">
                 <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
               </div>
-            ) : bookings.length === 0 ? (
+            ) : filteredBookings.length === 0 ? (
               <div className="text-center py-16 text-muted">
-                <p>אין תורים</p>
+                <p>{bookingView === 'active' ? 'אין תורים פעילים ליום זה' : bookingView === 'completed' ? 'אין תורים שהושלמו ליום זה' : 'אין תורים שבוטלו ליום זה'}</p>
               </div>
             ) : (
               <div className="space-y-2">
-                {bookings.map((booking) => (
+                {filteredBookings.map((booking) => (
                   <div
                     key={booking.id}
-                    className={`bg-card rounded-xl p-4 border border-border transition-all hover:shadow-sm ${
-                      booking.status === 'CANCELLED' ? 'opacity-50' : ''
-                    }`}
+                    className="bg-card rounded-xl p-4 border border-border transition-all hover:shadow-sm"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-lg font-black text-primary">{booking.time}</span>
                           <span className="font-bold text-foreground">{booking.name}</span>
-                          <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${statusColor(booking.status)}`}>
-                            {statusLabel(booking.status)}
-                          </span>
                         </div>
-                        <p className="text-sm text-muted mt-1">
-                          {booking.phone} · {booking.date} · {booking.time}
-                        </p>
+                        <p className="text-sm text-muted mt-1">{booking.phone}</p>
+
+                        {/* Reschedule info */}
+                        {booking.rescheduledFromTime && (
+                          <p className="text-xs text-orange-500 mt-1 font-medium">
+                            שונה מ-{booking.rescheduledFromTime}
+                            {booking.rescheduledFromDate && booking.rescheduledFromDate !== booking.date
+                              ? ` (${booking.rescheduledFromDate})`
+                              : ''}
+                          </p>
+                        )}
+
+                        {/* Cancelled by info */}
+                        {booking.status === 'CANCELLED' && booking.cancelledBy && (
+                          <p className="text-xs text-red-400 mt-1 font-medium">
+                            בוטל ע״י {booking.cancelledBy === 'customer' ? 'הלקוח' : 'הספר'}
+                          </p>
+                        )}
                       </div>
-                      <div className="flex gap-2 mr-3">
-                        {booking.status === 'CONFIRMED' && (
+
+                      {/* Actions only for active bookings */}
+                      {bookingView === 'active' && (
+                        <div className="flex gap-2 mr-3">
                           <button
-                            onClick={() => handleCompleteBooking(booking.id)}
+                            onClick={() => setConfirmPopup({ type: 'complete', booking })}
                             className="text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg font-bold hover:bg-blue-100 transition-colors"
                           >
                             הושלם
                           </button>
-                        )}
-                        {(booking.status === 'CONFIRMED' || booking.status === 'PENDING') && (
                           <button
-                            onClick={() => handleCancelBooking(booking.id)}
+                            onClick={() => setConfirmPopup({ type: 'cancel', booking })}
                             className="text-xs bg-red-50 text-red-500 px-3 py-1.5 rounded-lg font-bold hover:bg-red-100 transition-colors"
                           >
                             ביטול
                           </button>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* ── Confirm Popup ── */}
+        {confirmPopup && (
+          <div className="fixed inset-0 bg-black/40 z-[100] flex items-center justify-center px-4" onClick={() => setConfirmPopup(null)}>
+            <div className="bg-card rounded-2xl p-6 w-full max-w-sm shadow-2xl border border-border animate-scaleIn" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-lg font-bold text-foreground text-center mb-2">
+                {confirmPopup.type === 'complete' ? 'סימון כהושלם' : 'ביטול תור'}
+              </h3>
+              <p className="text-sm text-muted text-center mb-1">
+                {confirmPopup.booking.name} - {confirmPopup.booking.time}
+              </p>
+              <p className="text-sm text-muted text-center mb-6">
+                {confirmPopup.type === 'complete'
+                  ? 'האם לסמן את התור כהושלם?'
+                  : 'האם לבטל את התור? הלקוח לא יראה אותו יותר.'}
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmPopup(null)}
+                  className="flex-1 py-3 rounded-xl border-2 border-border text-muted font-bold text-sm hover:bg-gray-50 transition-colors"
+                >
+                  חזרה
+                </button>
+                <button
+                  onClick={handleConfirmAction}
+                  className={`flex-1 py-3 rounded-xl text-white font-bold text-sm transition-colors ${
+                    confirmPopup.type === 'complete'
+                      ? 'bg-blue-500 hover:bg-blue-600'
+                      : 'bg-red-500 hover:bg-red-600'
+                  }`}
+                >
+                  {confirmPopup.type === 'complete' ? 'הושלם' : 'בטל תור'}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
