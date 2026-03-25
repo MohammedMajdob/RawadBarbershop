@@ -69,17 +69,45 @@ export default function Home() {
   const [holdId, setHoldId] = useState<string | null>(null);
   const [holdExpiresAt, setHoldExpiresAt] = useState<string | null>(null);
 
-  // Release hold on page close/refresh
+  // Release hold on page close/refresh/navigate away + mobile tab switch
   useEffect(() => {
-    const handleUnload = () => {
-      const currentHoldId = holdId;
-      if (currentHoldId) {
-        const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api'}/booking/hold/${currentHoldId}/release`;
+    if (!holdId) return;
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://backend-production-1b38.up.railway.app/api';
+
+    const sendRelease = () => {
+      const url = `${apiUrl}/booking/hold/${holdId}/release`;
+      // sendBeacon is the most reliable way to send data on page exit
+      if (navigator.sendBeacon) {
         navigator.sendBeacon(url);
       }
     };
-    window.addEventListener('beforeunload', handleUnload);
-    return () => window.removeEventListener('beforeunload', handleUnload);
+
+    // Desktop: page close/refresh
+    const handleBeforeUnload = () => sendRelease();
+
+    // Mobile: more reliable than beforeunload on iOS/Android
+    const handlePageHide = (e: PageTransitionEvent) => {
+      // Only release if page is actually being discarded (not bfcache)
+      if (!e.persisted) sendRelease();
+    };
+
+    // Mobile/Desktop: user switches to another tab or app
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        sendRelease();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('pagehide', handlePageHide);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('pagehide', handlePageHide);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [holdId]);
 
   // Release hold when switching away from booking tab
@@ -87,6 +115,7 @@ export default function Home() {
     if (activeTab !== 'booking' && holdId) {
       releaseHold(holdId).catch(() => {});
       setHoldId(null);
+      setHoldExpiresAt(null);
     }
   }, [activeTab, holdId]);
 
@@ -261,6 +290,12 @@ export default function Home() {
     if (step === 0 && selectedDate) {
       setStep(1);
     } else if (step === 1 && selectedTime) {
+      // Release any existing hold before creating a new one
+      if (holdId) {
+        releaseHold(holdId).catch(() => {});
+        setHoldId(null);
+        setHoldExpiresAt(null);
+      }
       // Hold the slot when advancing to confirmation
       setHoldLoading(true);
       try {
