@@ -34,6 +34,12 @@ export class BookingController {
     return this.bookingService.releaseHold(id);
   }
 
+  // Heartbeat: extend hold while user is on page
+  @Post('hold/:id/renew')
+  renewHold(@Param('id') id: string) {
+    return this.bookingService.renewHold(id);
+  }
+
   @Post('start')
   start(@Body() dto: StartBookingDto) {
     return this.bookingService.startBooking(dto);

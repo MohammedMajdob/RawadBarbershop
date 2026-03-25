@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Logo from '@/components/ui/Logo';
 import HeroSlider from '@/components/ui/HeroSlider';
 import Stepper from '@/components/ui/Stepper';
@@ -22,6 +22,7 @@ import {
   rescheduleMyBooking,
   holdSlot,
   releaseHold,
+  renewHold,
 } from '@/lib/api';
 import { useHeroImages } from '@/lib/hooks';
 
@@ -69,57 +70,46 @@ export default function Home() {
   const [holdId, setHoldId] = useState<string | null>(null);
   const [holdExpiresAt, setHoldExpiresAt] = useState<string | null>(null);
 
-  // Release hold on page close/refresh/navigate away + mobile tab switch
+  // Heartbeat: renew hold every 8 seconds while user is on page.
+  // Hold expires after 15s on server — if user leaves, no more renewals → slot frees in ~15s.
+  // Also track a 2-minute max hold time for the user (UI countdown).
+  const holdStartRef = useRef<number>(0);
+
   useEffect(() => {
     if (!holdId) return;
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://backend-production-1b38.up.railway.app/api';
-    const releaseUrl = `${apiUrl}/booking/hold/${holdId}/release`;
+    holdStartRef.current = Date.now();
 
-    // Use both fetch+keepalive AND sendBeacon for maximum reliability
-    const sendRelease = () => {
-      try {
-        // fetch with keepalive survives page close and respects CORS
-        fetch(releaseUrl, { method: 'POST', keepalive: true }).catch(() => {});
-      } catch {
-        // Fallback: sendBeacon (doesn't always work with CORS)
-        try { navigator.sendBeacon(releaseUrl); } catch {}
-      }
-    };
-
-    // Desktop: page close/refresh
-    const handleBeforeUnload = () => sendRelease();
-
-    // Mobile: more reliable than beforeunload on iOS/Android
-    const handlePageHide = () => sendRelease();
-
-    // Mobile/Desktop: user switches to another tab or app
-    let releasedWhileHidden = false;
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        sendRelease();
-        releasedWhileHidden = true;
-      } else if (document.visibilityState === 'visible' && releasedWhileHidden) {
-        // User came back — hold was released on server, reset to time selection
-        releasedWhileHidden = false;
+    const interval = setInterval(async () => {
+      // Stop renewing after 2 minutes total
+      if (Date.now() - holdStartRef.current > 120 * 1000) {
+        clearInterval(interval);
         setHoldId(null);
         setHoldExpiresAt(null);
         setStep(1);
         setSelectedTime('');
-        setToast('השעה שוחררה כי יצאת מהאפליקציה, בחר שעה מחדש');
+        setToast('הזמן פג, בחר שעה מחדש');
+        return;
       }
-    };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    window.addEventListener('pagehide', handlePageHide);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+      // Only renew if page is visible
+      if (document.visibilityState === 'visible') {
+        try {
+          await renewHold(holdId);
+        } catch {
+          // Hold expired on server, reset
+          clearInterval(interval);
+          setHoldId(null);
+          setHoldExpiresAt(null);
+          setStep(1);
+          setSelectedTime('');
+          setToast('השעה שוחררה, בחר שעה מחדש');
+        }
+      }
+      // If page is hidden → we simply don't renew → hold expires on server
+    }, 8000);
 
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      window.removeEventListener('pagehide', handlePageHide);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
+    return () => clearInterval(interval);
   }, [holdId]);
 
   // Release hold when switching away from booking tab
@@ -315,7 +305,8 @@ export default function Home() {
       try {
         const result = await holdSlot({ date: selectedDate, time: selectedTime });
         setHoldId(result.holdId);
-        setHoldExpiresAt(result.expiresAt);
+        // Show 2 min countdown to user (server hold is 15s but renewed by heartbeat)
+        setHoldExpiresAt(new Date(Date.now() + 120 * 1000).toISOString());
         setStep(2);
       } catch {
         setToast('לקוח אחר מזמין את השעה הזו כרגע, נסה שוב בעוד כמה דקות או בחר שעה אחרת');

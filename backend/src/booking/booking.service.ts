@@ -48,12 +48,23 @@ export class BookingService {
           date: dto.date,
           time: dto.time,
           status: 'PENDING',
-          expiresAt: new Date(Date.now() + 120 * 1000), // 2 minutes
+          expiresAt: new Date(Date.now() + 15 * 1000), // 15 seconds, renewed by heartbeat
         },
       });
     });
 
     return { holdId: hold.id, expiresAt: hold.expiresAt.toISOString() };
+  }
+
+  async renewHold(holdId: string) {
+    const result = await this.prisma.booking.updateMany({
+      where: { id: holdId, name: '_hold_', status: 'PENDING' },
+      data: { expiresAt: new Date(Date.now() + 15 * 1000) },
+    });
+    if (result.count === 0) {
+      throw new NotFoundException('Hold not found or expired');
+    }
+    return { message: 'renewed' };
   }
 
   async releaseHold(holdId: string) {

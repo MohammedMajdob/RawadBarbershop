@@ -55,6 +55,12 @@ export async function releaseHold(holdId: string) {
   });
 }
 
+export async function renewHold(holdId: string) {
+  return fetchApi(`/booking/hold/${holdId}/renew`, {
+    method: 'POST',
+  });
+}
+
 // Booking
 export async function startBooking(data: {
   name: string;
