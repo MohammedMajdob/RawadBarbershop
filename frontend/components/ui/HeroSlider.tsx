@@ -1,35 +1,54 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Component, type ReactNode } from 'react';
+
+// Error boundary to prevent crashes
+class SliderErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  render() {
+    if (this.state.hasError) return null;
+    return this.props.children;
+  }
+}
 
 interface HeroImage {
   id: string;
   url: string;
-  title?: string;
+  title?: string | null;
 }
 
 interface HeroSliderProps {
   images?: HeroImage[];
 }
 
-export default function HeroSlider({ images }: HeroSliderProps) {
+function HeroSliderInner({ images }: HeroSliderProps) {
   const [current, setCurrent] = useState(0);
   const [imgErrors, setImgErrors] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    if (!images || images.length <= 1) return;
-    const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % images.length);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, [images]);
-
-  // Filter out images with broken URLs
   const validImages = (images || []).filter(
-    (img) => img.url && !imgErrors.has(img.id),
+    (img) => img && img.url && typeof img.url === 'string' && !imgErrors.has(img.id),
   );
 
+  useEffect(() => {
+    if (validImages.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % validImages.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [validImages.length]);
+
   if (validImages.length === 0) return null;
+
+  const activeIndex = current % validImages.length;
 
   return (
     <div className="relative w-full h-44 md:h-52 rounded-2xl overflow-hidden mx-auto max-w-2xl shadow-md border border-gray-100">
@@ -38,13 +57,14 @@ export default function HeroSlider({ images }: HeroSliderProps) {
           key={slide.id}
           className={`
             absolute inset-0 transition-all duration-700 ease-in-out
-            ${index === current % validImages.length ? 'opacity-100' : 'opacity-0'}
+            ${index === activeIndex ? 'opacity-100' : 'opacity-0'}
           `}
         >
           <img
             src={slide.url}
             alt={slide.title || ''}
             className="w-full h-full object-cover"
+            loading="lazy"
             onError={() =>
               setImgErrors((prev) => new Set(prev).add(slide.id))
             }
@@ -65,12 +85,20 @@ export default function HeroSlider({ images }: HeroSliderProps) {
               onClick={() => setCurrent(index)}
               className={`
                 h-2 rounded-full transition-all duration-300
-                ${index === current % validImages.length ? 'bg-white w-6' : 'bg-white/50 w-2'}
+                ${index === activeIndex ? 'bg-white w-6' : 'bg-white/50 w-2'}
               `}
             />
           ))}
         </div>
       )}
     </div>
+  );
+}
+
+export default function HeroSlider({ images }: HeroSliderProps) {
+  return (
+    <SliderErrorBoundary>
+      <HeroSliderInner images={images} />
+    </SliderErrorBoundary>
   );
 }

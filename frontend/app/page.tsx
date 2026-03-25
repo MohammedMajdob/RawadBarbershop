@@ -55,9 +55,13 @@ export default function Home() {
   const [authChecked, setAuthChecked] = useState(false);
 
   // Hero images from DB
-  const [heroImages, setHeroImages] = useState<{ id: string; url: string; title?: string }[]>([]);
+  const [heroImages, setHeroImages] = useState<{ id: string; url: string; title?: string | null }[]>([]);
   useEffect(() => {
-    getPublicHeroImages().then(setHeroImages).catch(() => {});
+    getPublicHeroImages()
+      .then((data) => {
+        if (Array.isArray(data)) setHeroImages(data);
+      })
+      .catch(() => {});
   }, []);
 
   // Tab navigation - always visible
