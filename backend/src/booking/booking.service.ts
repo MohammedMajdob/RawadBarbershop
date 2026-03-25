@@ -72,8 +72,8 @@ export class BookingService {
   async startBooking(dto: StartBookingDto) {
     const otpCode = this.sms.generateOtp();
     const now = new Date();
-    const expiresAt = new Date(now.getTime() + 10 * 60 * 1000); // 10 minutes for full flow
-    const otpExpiry = new Date(now.getTime() + 5 * 60 * 1000); // 5 minutes for OTP
+    const expiresAt = new Date(now.getTime() + 3 * 60 * 1000); // 3 minutes for full flow
+    const otpExpiry = new Date(now.getTime() + 3 * 60 * 1000); // 3 minutes for OTP
 
     // Use transaction to prevent race conditions
     const booking = await this.prisma.$transaction(async (tx) => {
