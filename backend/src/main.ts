@@ -10,13 +10,22 @@ async function bootstrap() {
   app.use(urlencoded({ extended: true, limit: '10mb' }));
 
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'https://www.gentlemen1996.co.il',
-      'https://gentlemen1996.co.il',
-      process.env.FRONTEND_URL,
-    ].filter(Boolean) as string[],
+    origin: (origin, callback) => {
+      const allowed = [
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'https://www.gentlemen1996.co.il',
+        'https://gentlemen1996.co.il',
+        process.env.FRONTEND_URL,
+      ].filter(Boolean);
+
+      // Allow Vercel preview deployments
+      if (!origin || allowed.includes(origin) || /\.vercel\.app$/.test(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, false);
+      }
+    },
     credentials: true,
   });
 
