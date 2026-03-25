@@ -1,15 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { getMyBookings, cancelMyBooking } from '@/lib/api';
-
-interface Booking {
-  id: string;
-  name: string;
-  date: string;
-  time: string;
-  status: string;
-}
+import { useState } from 'react';
+import { useMyBookings } from '@/lib/hooks';
+import { cancelMyBooking } from '@/lib/api';
+import { BookingsSkeleton } from '@/components/ui/Skeleton';
 
 interface MyBookingsProps {
   token: string;
@@ -29,26 +23,11 @@ function formatDate(dateStr: string) {
 }
 
 export default function MyBookings({ token, onReschedule, onClose }: MyBookingsProps) {
-  const [upcoming, setUpcoming] = useState<Booking[]>([]);
-  const [past, setPast] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading, mutate } = useMyBookings(token);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadBookings();
-  }, []);
-
-  const loadBookings = async () => {
-    try {
-      const data = await getMyBookings(token);
-      setUpcoming(data.upcoming);
-      setPast(data.past);
-    } catch {
-      // silently handle
-    } finally {
-      setLoading(false);
-    }
-  };
+  const upcoming = data?.upcoming || [];
+  const past = data?.past || [];
 
   const handleCancel = async (bookingId: string) => {
     if (!confirm('האם אתה בטוח שברצונך לבטל את התור?')) return;
@@ -56,7 +35,11 @@ export default function MyBookings({ token, onReschedule, onClose }: MyBookingsP
     setCancellingId(bookingId);
     try {
       await cancelMyBooking(token, bookingId);
-      setUpcoming((prev) => prev.filter((b) => b.id !== bookingId));
+      // Optimistic update: remove from list immediately
+      mutate(
+        { upcoming: upcoming.filter((b: { id: string }) => b.id !== bookingId), past },
+        { revalidate: true },
+      );
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'שגיאה בביטול התור';
       alert(message);
@@ -65,12 +48,8 @@ export default function MyBookings({ token, onReschedule, onClose }: MyBookingsP
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <span className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+  if (isLoading && upcoming.length === 0 && past.length === 0) {
+    return <BookingsSkeleton />;
   }
 
   return (
@@ -92,7 +71,7 @@ export default function MyBookings({ token, onReschedule, onClose }: MyBookingsP
       {upcoming.length > 0 ? (
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-muted">תורים קרובים</h3>
-          {upcoming.map((booking) => (
+          {upcoming.map((booking: { id: string; date: string; time: string; status: string }) => (
             <div
               key={booking.id}
               className="bg-card rounded-2xl p-4 border-2 border-primary/20 shadow-sm"
@@ -148,7 +127,7 @@ export default function MyBookings({ token, onReschedule, onClose }: MyBookingsP
       {past.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-muted">תורים קודמים</h3>
-          {past.slice(0, 5).map((booking) => (
+          {past.slice(0, 5).map((booking: { id: string; date: string; time: string; status: string }) => (
             <div
               key={booking.id}
               className="bg-card rounded-xl p-3 border border-border opacity-60"

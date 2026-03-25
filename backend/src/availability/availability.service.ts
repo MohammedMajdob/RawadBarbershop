@@ -15,9 +15,16 @@ type Schedule = Record<string, DaySchedule>;
 
 @Injectable()
 export class AvailabilityService {
+  private settingsCache: { data: any; expiry: number } | null = null;
+
   constructor(private prisma: PrismaService) {}
 
   async getSettings() {
+    // Cache settings for 30 seconds (they rarely change)
+    if (this.settingsCache && Date.now() < this.settingsCache.expiry) {
+      return this.settingsCache.data;
+    }
+
     let settings = await this.prisma.settings.findUnique({
       where: { id: 'default' },
     });
@@ -28,6 +35,7 @@ export class AvailabilityService {
       });
     }
 
+    this.settingsCache = { data: settings, expiry: Date.now() + 30000 };
     return settings;
   }
 

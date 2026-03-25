@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, Component, type ReactNode } from 'react';
+import { useState, useEffect, useCallback, Component, type ReactNode } from 'react';
+import { HeroSkeleton } from './Skeleton';
 
-// Error boundary to prevent crashes
 class SliderErrorBoundary extends Component<
   { children: ReactNode },
   { hasError: boolean }
@@ -28,24 +28,36 @@ interface HeroImage {
 
 interface HeroSliderProps {
   images?: HeroImage[];
+  loading?: boolean;
 }
 
-function HeroSliderInner({ images }: HeroSliderProps) {
+// Optimize Cloudinary URL for mobile
+function optimizeImageUrl(url: string, width = 800): string {
+  if (!url.includes('cloudinary.com')) return url;
+  // Insert transformation before /upload/ or after /upload/
+  return url.replace('/upload/', `/upload/w_${width},q_auto,f_auto/`);
+}
+
+function HeroSliderInner({ images, loading }: HeroSliderProps) {
   const [current, setCurrent] = useState(0);
   const [imgErrors, setImgErrors] = useState<Set<string>>(new Set());
+  const [imagesLoaded, setImagesLoaded] = useState<Set<string>>(new Set());
 
   const validImages = (images || []).filter(
     (img) => img && img.url && typeof img.url === 'string' && !imgErrors.has(img.id),
   );
 
-  useEffect(() => {
-    if (validImages.length <= 1) return;
-    const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % validImages.length);
-    }, 4000);
-    return () => clearInterval(timer);
+  const advance = useCallback(() => {
+    setCurrent((prev) => (prev + 1) % validImages.length);
   }, [validImages.length]);
 
+  useEffect(() => {
+    if (validImages.length <= 1) return;
+    const timer = setInterval(advance, 4000);
+    return () => clearInterval(timer);
+  }, [validImages.length, advance]);
+
+  if (loading && validImages.length === 0) return <HeroSkeleton />;
   if (validImages.length === 0) return null;
 
   const activeIndex = current % validImages.length;
@@ -60,14 +72,18 @@ function HeroSliderInner({ images }: HeroSliderProps) {
             ${index === activeIndex ? 'opacity-100' : 'opacity-0'}
           `}
         >
+          {/* Show gray bg until image loads */}
+          {!imagesLoaded.has(slide.id) && (
+            <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+          )}
           <img
-            src={slide.url}
+            src={optimizeImageUrl(slide.url)}
             alt={slide.title || ''}
             className="w-full h-full object-cover"
-            loading="lazy"
-            onError={() =>
-              setImgErrors((prev) => new Set(prev).add(slide.id))
-            }
+            loading={index === 0 ? 'eager' : 'lazy'}
+            decoding="async"
+            onLoad={() => setImagesLoaded(prev => new Set(prev).add(slide.id))}
+            onError={() => setImgErrors((prev) => new Set(prev).add(slide.id))}
           />
           {slide.title && (
             <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-4">
@@ -95,10 +111,10 @@ function HeroSliderInner({ images }: HeroSliderProps) {
   );
 }
 
-export default function HeroSlider({ images }: HeroSliderProps) {
+export default function HeroSlider({ images, loading }: HeroSliderProps) {
   return (
     <SliderErrorBoundary>
-      <HeroSliderInner images={images} />
+      <HeroSliderInner images={images} loading={loading} />
     </SliderErrorBoundary>
   );
 }

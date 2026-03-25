@@ -21,9 +21,8 @@ import {
   rescheduleMyBooking,
   holdSlot,
   releaseHold,
-  getPublicHeroImages,
-  getAvailableDates,
 } from '@/lib/api';
+import { useHeroImages } from '@/lib/hooks';
 
 interface CustomerProfile {
   id: string;
@@ -55,29 +54,9 @@ export default function Home() {
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
 
-  // Hero images from DB
-  const [heroImages, setHeroImages] = useState<{ id: string; url: string; title?: string | null }[]>([]);
-
-  // Prefetch available dates so calendar loads instantly
-  const [prefetchedDates, setPrefetchedDates] = useState<Set<string> | null>(null);
-
-  useEffect(() => {
-    getPublicHeroImages()
-      .then((data) => {
-        if (Array.isArray(data)) setHeroImages(data);
-      })
-      .catch(() => {});
-
-    // Prefetch dates immediately on page load
-    getAvailableDates()
-      .then((data) => {
-        const avail = new Set<string>(
-          data.dates.filter((d: { available: boolean }) => d.available).map((d: { date: string }) => d.date)
-        );
-        setPrefetchedDates(avail);
-      })
-      .catch(() => {});
-  }, []);
+  // Hero images from DB (SWR cached)
+  const { data: heroData, isLoading: heroLoading } = useHeroImages();
+  const heroImages = Array.isArray(heroData) ? heroData : [];
 
   // Tab navigation - always visible
   const [activeTab, setActiveTab] = useState<ActiveTab>('booking');
@@ -226,8 +205,6 @@ export default function Home() {
     }
   };
 
-  const [slotsRefreshKey, setSlotsRefreshKey] = useState(0);
-
   const doReleaseHold = async () => {
     if (holdId) {
       try { await releaseHold(holdId); } catch {}
@@ -298,7 +275,6 @@ export default function Home() {
   const goBack = async () => {
     if (step === 2) {
       await doReleaseHold();
-      setSlotsRefreshKey((k) => k + 1);
     }
     if (step > 0 && step < 4) setStep(step - 1);
   };
@@ -318,7 +294,7 @@ export default function Home() {
     <>
       {/* Promotions Slider */}
       <div className="px-4 py-3 bg-white">
-        <HeroSlider images={heroImages} />
+        <HeroSlider images={heroImages} loading={heroLoading} />
       </div>
 
       {/* Stepper */}
@@ -351,13 +327,11 @@ export default function Home() {
             onSelect={handleDateSelect}
             selectedDate={selectedDate}
             title={rescheduleId ? 'בחר תאריך חדש' : undefined}
-            prefetchedDates={prefetchedDates}
           />
         )}
 
         {step === 1 && (
           <TimePicker
-            key={`time-${slotsRefreshKey}`}
             date={selectedDate}
             onSelect={handleTimeSelect}
             selectedTime={selectedTime}
@@ -500,7 +474,6 @@ export default function Home() {
           <div className="flex-1 max-w-3xl w-full mx-auto px-4 py-8">
             {isAuthenticated ? (
               <MyBookings
-                key={Date.now()}
                 token={token}
                 onReschedule={handleReschedule}
                 onClose={handleNewBooking}

@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, Header } from '@nestjs/common';
 import { AvailabilityService } from './availability.service';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -15,15 +15,18 @@ export class AvailabilityController {
   }
 
   @Get('dates')
+  @Header('Cache-Control', 'public, max-age=30, s-maxage=30')
   getDates() {
     return this.availabilityService.getAvailableDates();
   }
 
   @Get('hero')
+  @Header('Cache-Control', 'public, max-age=300, s-maxage=300')
   getPublicHeroImages() {
     return this.prisma.heroImage.findMany({
       where: { active: true },
       orderBy: { order: 'asc' },
+      select: { id: true, url: true, title: true },
     });
   }
 }

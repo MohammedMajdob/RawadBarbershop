@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { getAvailableSlots } from '@/lib/api';
+import { useAvailableSlots } from '@/lib/hooks';
+import { TimeSlotsSkeleton } from '@/components/ui/Skeleton';
 
 interface TimePickerProps {
   date: string;
@@ -11,33 +11,14 @@ interface TimePickerProps {
 }
 
 export default function TimePicker({ date, onSelect, selectedTime, title }: TimePickerProps) {
-  const [slots, setSlots] = useState<{ time: string; available: boolean; held?: boolean }[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState('');
+  const { data, isLoading } = useAvailableSlots(date);
 
-  const fetchSlots = useCallback((showLoader: boolean) => {
-    if (showLoader) setLoading(true);
-    getAvailableSlots(date)
-      .then((data) => {
-        setSlots(data.slots || []);
-        setMessage(data.message || '');
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [date]);
+  const slots = data?.slots || [];
+  const message = data?.message || '';
 
-  useEffect(() => {
-    fetchSlots(true);
-    const interval = setInterval(() => fetchSlots(false), 5000);
-    return () => clearInterval(interval);
-  }, [fetchSlots]);
-
-  if (loading) {
-    return (
-      <div className="flex justify-center py-16">
-        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+  // Skeleton on first load only
+  if (isLoading && slots.length === 0) {
+    return <TimeSlotsSkeleton />;
   }
 
   if (message && slots.length === 0) {
@@ -58,7 +39,7 @@ export default function TimePicker({ date, onSelect, selectedTime, title }: Time
       <h2 className="text-xl font-bold text-center text-foreground mb-6">{title || 'בחר שעה'}</h2>
 
       <div className="max-w-md mx-auto grid grid-cols-3 gap-3 stagger-children">
-        {slots.map(({ time, available, held }) => {
+        {slots.map(({ time, available, held }: { time: string; available: boolean; held?: boolean }) => {
           const isSelected = selectedTime === time;
 
           return (

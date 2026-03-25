@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
-import { getAvailableDates } from '@/lib/api';
+import { useState, useMemo, useCallback } from 'react';
+import { useAvailableDates } from '@/lib/hooks';
+import { CalendarSkeleton } from '@/components/ui/Skeleton';
 
 interface DatePickerProps {
   onSelect: (date: string) => void;
   selectedDate?: string;
   title?: string;
-  prefetchedDates?: Set<string> | null;
 }
 
 const dayLabels = ["א'", "ב'", "ג'", "ד'", "ה'", "ו'", "ש'"];
@@ -16,29 +16,16 @@ const monthNames = [
   'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר',
 ];
 
-export default function DatePicker({ onSelect, selectedDate, title, prefetchedDates }: DatePickerProps) {
-  const [availableDates, setAvailableDates] = useState<Set<string>>(prefetchedDates || new Set());
-  const [loading, setLoading] = useState(!prefetchedDates);
+export default function DatePicker({ onSelect, selectedDate, title }: DatePickerProps) {
+  const { data, isLoading } = useAvailableDates();
   const [viewMonth, setViewMonth] = useState(() => new Date());
 
-  useEffect(() => {
-    // If prefetched data was provided, use it directly
-    if (prefetchedDates) {
-      setAvailableDates(prefetchedDates);
-      setLoading(false);
-      return;
-    }
-    // Fallback: fetch if no prefetched data
-    getAvailableDates()
-      .then((data) => {
-        const avail = new Set<string>(
-          data.dates.filter((d: { available: boolean }) => d.available).map((d: { date: string }) => d.date)
-        );
-        setAvailableDates(avail);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [prefetchedDates]);
+  const availableDates = useMemo(() => {
+    if (!data?.dates) return new Set<string>();
+    return new Set<string>(
+      data.dates.filter((d: { available: boolean }) => d.available).map((d: { date: string }) => d.date)
+    );
+  }, [data]);
 
   const today = useMemo(() => {
     const d = new Date();
@@ -51,20 +38,10 @@ export default function DatePicker({ onSelect, selectedDate, title, prefetchedDa
     const month = viewMonth.getMonth();
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
-    const startDayOfWeek = firstDay.getDay(); // 0=Sunday
-
+    const startDayOfWeek = firstDay.getDay();
     const days: (Date | null)[] = [];
-
-    // Empty cells before first day
-    for (let i = 0; i < startDayOfWeek; i++) {
-      days.push(null);
-    }
-
-    // Days of month
-    for (let d = 1; d <= lastDay.getDate(); d++) {
-      days.push(new Date(year, month, d));
-    }
-
+    for (let i = 0; i < startDayOfWeek; i++) days.push(null);
+    for (let d = 1; d <= lastDay.getDate(); d++) days.push(new Date(year, month, d));
     return days;
   }, [viewMonth]);
 
@@ -87,6 +64,11 @@ export default function DatePicker({ onSelect, selectedDate, title, prefetchedDa
     const dateOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate());
     return dateOnly < today;
   };
+
+  // Show skeleton only on first load (no cached data)
+  if (isLoading && availableDates.size === 0) {
+    return <CalendarSkeleton />;
+  }
 
   return (
     <div className="animate-fadeInUp">
@@ -143,13 +125,12 @@ export default function DatePicker({ onSelect, selectedDate, title, prefetchedDa
             return (
               <button
                 key={dateStr}
-                disabled={loading || !available || past}
+                disabled={!available || past}
                 onClick={() => onSelect(dateStr)}
                 className={`
                   relative h-11 rounded-xl text-sm font-semibold transition-all duration-200
-                  ${loading && !past
-                    ? 'bg-gray-100 text-gray-300 animate-pulse'
-                    : selected
+                  ${
+                    selected
                       ? 'bg-primary text-white shadow-md shadow-primary/30 scale-105'
                       : available && !past
                         ? 'bg-gray-50 text-foreground hover:bg-primary/10 hover:text-primary cursor-pointer'
