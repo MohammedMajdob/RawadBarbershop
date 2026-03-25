@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://backend-production-1b38.up.railway.app/api';
 
 async function fetchApi(endpoint: string, options?: RequestInit) {
   const { headers, ...rest } = options || {};
