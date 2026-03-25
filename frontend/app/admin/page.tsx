@@ -425,12 +425,12 @@ export default function AdminPage() {
             {/* Quick: Today's bookings */}
             <div className="bg-card rounded-2xl p-5 border border-border">
               <h3 className="font-bold text-foreground mb-3">תורים להיום</h3>
-              {bookings.filter(b => b.date === new Date().toISOString().split('T')[0] && b.status !== 'CANCELLED').length === 0 ? (
+              {bookings.filter(b => b.date === new Date().toLocaleDateString('en-CA') && b.status !== 'CANCELLED').length === 0 ? (
                 <p className="text-muted text-sm">אין תורים להיום</p>
               ) : (
                 <div className="space-y-2">
                   {bookings
-                    .filter(b => b.date === new Date().toISOString().split('T')[0] && b.status !== 'CANCELLED')
+                    .filter(b => b.date === new Date().toLocaleDateString('en-CA') && b.status !== 'CANCELLED')
                     .map((b) => (
                       <div key={b.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
                         <div>

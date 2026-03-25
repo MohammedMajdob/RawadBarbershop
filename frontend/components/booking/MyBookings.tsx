@@ -14,12 +14,13 @@ interface MyBookingsProps {
 const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 
 function formatDate(dateStr: string) {
-  const d = new Date(dateStr);
-  const day = d.getDate().toString().padStart(2, '0');
-  const month = (d.getMonth() + 1).toString().padStart(2, '0');
-  const year = d.getFullYear();
+  // Parse as local date to avoid timezone shift (dateStr is "YYYY-MM-DD")
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const d = new Date(year, month - 1, day);
+  const dayPad = day.toString().padStart(2, '0');
+  const monthPad = month.toString().padStart(2, '0');
   const dayName = dayNames[d.getDay()];
-  return `יום ${dayName}, ${day}/${month}/${year}`;
+  return `יום ${dayName}, ${dayPad}/${monthPad}/${year}`;
 }
 
 export default function MyBookings({ token, onReschedule, onClose }: MyBookingsProps) {

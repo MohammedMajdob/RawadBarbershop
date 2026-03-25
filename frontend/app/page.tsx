@@ -13,6 +13,7 @@ import Confirmation from '@/components/booking/Confirmation';
 import MyBookings from '@/components/booking/MyBookings';
 import ProfilePage from '@/components/booking/ProfilePage';
 import LoginPrompt from '@/components/booking/LoginPrompt';
+import { mutate } from 'swr';
 import {
   startBooking,
   verifyBooking,
@@ -168,6 +169,8 @@ export default function Home() {
         }
       }
 
+      // Invalidate bookings cache so "my bookings" tab stays in sync
+      mutate((key: unknown) => Array.isArray(key) && key[0] === '/booking/my');
       setStep(4);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'קוד שגוי';
@@ -197,6 +200,8 @@ export default function Home() {
       setRescheduleId(null);
       setHoldId(null);
       setStep(4);
+      // Invalidate bookings cache so "my bookings" tab stays in sync
+      mutate((key: unknown) => Array.isArray(key) && key[0] === '/booking/my');
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'שגיאה ביצירת ההזמנה';
       alert(message);
@@ -573,7 +578,9 @@ interface QuickConfirmStepProps {
 const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 
 function QuickConfirmStep({ name, phone, date, time, loading, onConfirm, isReschedule, holdExpiresAt, onHoldExpired }: QuickConfirmStepProps) {
-  const d = new Date(date);
+  // Parse as local date to avoid timezone shift (date is "YYYY-MM-DD")
+  const [year, month, day] = date.split('-').map(Number);
+  const d = new Date(year, month - 1, day);
   const dayName = dayNames[d.getDay()];
 
   return (

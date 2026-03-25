@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -8,7 +8,10 @@ export class AdminService {
   // ── Bookings ──────────────────────────────────────────
 
   async getBookings(date?: string, status?: string) {
-    const where: any = {};
+    const where: any = {
+      // Never show temporary hold records in admin
+      NOT: { name: '_hold_', phone: '_hold_' },
+    };
     if (date) where.date = date;
     if (status) where.status = status;
 
@@ -22,6 +25,13 @@ export class AdminService {
     const booking = await this.prisma.booking.findUnique({ where: { id } });
     if (!booking) throw new NotFoundException('הזמנה לא נמצאה');
 
+    if (booking.status === 'CANCELLED') {
+      throw new BadRequestException('ההזמנה כבר בוטלה');
+    }
+    if (booking.status === 'COMPLETED') {
+      throw new BadRequestException('לא ניתן לבטל הזמנה שהושלמה');
+    }
+
     return this.prisma.booking.update({
       where: { id },
       data: { status: 'CANCELLED' },
@@ -32,6 +42,10 @@ export class AdminService {
     const booking = await this.prisma.booking.findUnique({ where: { id } });
     if (!booking) throw new NotFoundException('הזמנה לא נמצאה');
 
+    if (booking.status !== 'CONFIRMED') {
+      throw new BadRequestException('ניתן להשלים רק תורים מאושרים');
+    }
+
     return this.prisma.booking.update({
       where: { id },
       data: { status: 'COMPLETED' },
@@ -41,17 +55,21 @@ export class AdminService {
   // ── Dashboard Stats ───────────────────────────────────
 
   async getDashboardStats() {
-    const today = new Date().toISOString().split('T')[0];
+    // Use local date to avoid timezone issues (same approach as availability service)
+    const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD local
 
     const now = new Date();
     const dayOfWeek = now.getDay();
     const weekStart = new Date(now);
     weekStart.setDate(now.getDate() - dayOfWeek);
-    const weekStartStr = weekStart.toISOString().split('T')[0];
+    const weekStartStr = weekStart.toLocaleDateString('en-CA');
 
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate() + 6);
-    const weekEndStr = weekEnd.toISOString().split('T')[0];
+    const weekEndStr = weekEnd.toLocaleDateString('en-CA');
+
+    // Exclude hold records (_hold_) from all counts — they are not real bookings
+    const notHold = { NOT: { name: '_hold_', phone: '_hold_' } };
 
     const [todayBookings, weekBookings, cancelledThisWeek, totalConfirmed] =
       await Promise.all([
@@ -59,22 +77,28 @@ export class AdminService {
           where: {
             date: today,
             status: { in: ['CONFIRMED', 'COMPLETED'] },
+            ...notHold,
           },
         }),
         this.prisma.booking.count({
           where: {
             date: { gte: weekStartStr, lte: weekEndStr },
             status: { in: ['CONFIRMED', 'COMPLETED'] },
+            ...notHold,
           },
         }),
         this.prisma.booking.count({
           where: {
             date: { gte: weekStartStr, lte: weekEndStr },
             status: 'CANCELLED',
+            ...notHold,
           },
         }),
         this.prisma.booking.count({
-          where: { status: { in: ['CONFIRMED', 'COMPLETED'] } },
+          where: {
+            status: { in: ['CONFIRMED', 'COMPLETED'] },
+            ...notHold,
+          },
         }),
       ]);
 

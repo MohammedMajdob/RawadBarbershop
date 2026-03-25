@@ -16,7 +16,9 @@ export default function DetailsForm({ date, time, onSubmit, loading }: DetailsFo
   const [phone, setPhone] = useState('');
   const [errors, setErrors] = useState<{ name?: string; phone?: string }>({});
 
-  const d = new Date(date);
+  // Parse as local date to avoid timezone shift
+  const [yr, mo, dy] = date.split('-').map(Number);
+  const d = new Date(yr, mo - 1, dy);
   const dayName = dayNames[d.getDay()];
 
   const validate = () => {

@@ -295,7 +295,7 @@ export class BookingService {
   // ─── Get customer's bookings ───────────────────────────────────
 
   async getMyBookings(customerId: string) {
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD local timezone
 
     const bookings = await this.prisma.booking.findMany({
       where: {
@@ -362,34 +362,35 @@ export class BookingService {
     bookingId: string,
     dto: { date: string; time: string },
   ) {
-    const booking = await this.prisma.booking.findUnique({
-      where: { id: bookingId },
-    });
-
-    if (!booking) {
-      throw new NotFoundException('התור לא נמצא');
-    }
-
-    if (booking.customerId !== customerId) {
-      throw new ForbiddenException('אין לך הרשאה לעדכן תור זה');
-    }
-
-    if (booking.status !== 'CONFIRMED') {
-      throw new BadRequestException('ניתן לעדכן רק תורים מאושרים');
-    }
-
-    // Use transaction: cancel old + create new
+    // All checks inside transaction to prevent race conditions
     const result = await this.prisma.$transaction(async (tx) => {
+      const booking = await tx.booking.findUnique({
+        where: { id: bookingId },
+      });
+
+      if (!booking) {
+        throw new NotFoundException('התור לא נמצא');
+      }
+
+      if (booking.customerId !== customerId) {
+        throw new ForbiddenException('אין לך הרשאה לעדכן תור זה');
+      }
+
+      if (booking.status !== 'CONFIRMED') {
+        throw new BadRequestException('ניתן לעדכן רק תורים מאושרים');
+      }
+
       // Remove any hold for the new slot
       await tx.booking.deleteMany({
         where: { date: dto.date, time: dto.time, name: '_hold_', status: 'PENDING' },
       });
 
-      // Check new slot availability
+      // Check new slot availability (exclude the booking being rescheduled)
       const conflicting = await tx.booking.findFirst({
         where: {
           date: dto.date,
           time: dto.time,
+          id: { not: bookingId },
           OR: [
             { status: 'CONFIRMED' },
             { status: 'PENDING', expiresAt: { gt: new Date() } },

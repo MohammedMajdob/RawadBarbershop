@@ -10,7 +10,8 @@ interface ConfirmationProps {
 }
 
 export default function Confirmation({ booking, onNewBooking }: ConfirmationProps) {
-  const d = new Date(booking.date);
+  // Parse as local date to avoid timezone shift
+  const [year, month, day] = booking.date.split('-').map(Number);
 
   return (
     <div className="text-center max-w-md mx-auto animate-scaleIn space-y-6">
@@ -43,7 +44,7 @@ export default function Confirmation({ booking, onNewBooking }: ConfirmationProp
           <div className="flex justify-between items-center">
             <span className="text-muted text-sm">תאריך</span>
             <span className="font-semibold text-foreground">
-              {d.getDate().toString().padStart(2, '0')}/{(d.getMonth() + 1).toString().padStart(2, '0')}/{d.getFullYear()}
+              {day.toString().padStart(2, '0')}/{month.toString().padStart(2, '0')}/{year}
             </span>
           </div>
           <div className="flex justify-between items-center">
