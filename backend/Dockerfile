@@ -1,5 +1,4 @@
-# Build stage
-FROM node:20-alpine AS builder
+FROM node:20-alpine
 
 WORKDIR /app
 
@@ -9,20 +8,8 @@ RUN npm ci
 COPY . .
 
 RUN npx prisma generate
-RUN npm run build 2>&1 && echo "--- dist contents ---" && ls -la dist/ || echo "--- no dist directory ---" && ls -la
-
-# Production stage
-FROM node:20-alpine
-
-WORKDIR /app
-
-COPY package.json package-lock.json tsconfig.json ./
-COPY prisma ./prisma
-COPY prisma.config.ts ./
-RUN npm ci --omit=dev && npm install dotenv tsx
-RUN npx prisma generate
-
-COPY --from=builder /app/dist ./dist
+RUN npm run build
+RUN ls -la dist/
 
 EXPOSE 3002
 
