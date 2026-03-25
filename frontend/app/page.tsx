@@ -22,6 +22,7 @@ import {
   holdSlot,
   releaseHold,
   getPublicHeroImages,
+  getAvailableDates,
 } from '@/lib/api';
 
 interface CustomerProfile {
@@ -56,10 +57,24 @@ export default function Home() {
 
   // Hero images from DB
   const [heroImages, setHeroImages] = useState<{ id: string; url: string; title?: string | null }[]>([]);
+
+  // Prefetch available dates so calendar loads instantly
+  const [prefetchedDates, setPrefetchedDates] = useState<Set<string> | null>(null);
+
   useEffect(() => {
     getPublicHeroImages()
       .then((data) => {
         if (Array.isArray(data)) setHeroImages(data);
+      })
+      .catch(() => {});
+
+    // Prefetch dates immediately on page load
+    getAvailableDates()
+      .then((data) => {
+        const avail = new Set<string>(
+          data.dates.filter((d: { available: boolean }) => d.available).map((d: { date: string }) => d.date)
+        );
+        setPrefetchedDates(avail);
       })
       .catch(() => {});
   }, []);
@@ -336,6 +351,7 @@ export default function Home() {
             onSelect={handleDateSelect}
             selectedDate={selectedDate}
             title={rescheduleId ? 'בחר תאריך חדש' : undefined}
+            prefetchedDates={prefetchedDates}
           />
         )}
 

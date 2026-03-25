@@ -7,6 +7,7 @@ interface DatePickerProps {
   onSelect: (date: string) => void;
   selectedDate?: string;
   title?: string;
+  prefetchedDates?: Set<string> | null;
 }
 
 const dayLabels = ["א'", "ב'", "ג'", "ד'", "ה'", "ו'", "ש'"];
@@ -15,12 +16,19 @@ const monthNames = [
   'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר',
 ];
 
-export default function DatePicker({ onSelect, selectedDate, title }: DatePickerProps) {
-  const [availableDates, setAvailableDates] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState(true);
+export default function DatePicker({ onSelect, selectedDate, title, prefetchedDates }: DatePickerProps) {
+  const [availableDates, setAvailableDates] = useState<Set<string>>(prefetchedDates || new Set());
+  const [loading, setLoading] = useState(!prefetchedDates);
   const [viewMonth, setViewMonth] = useState(() => new Date());
 
   useEffect(() => {
+    // If prefetched data was provided, use it directly
+    if (prefetchedDates) {
+      setAvailableDates(prefetchedDates);
+      setLoading(false);
+      return;
+    }
+    // Fallback: fetch if no prefetched data
     getAvailableDates()
       .then((data) => {
         const avail = new Set<string>(
@@ -30,7 +38,7 @@ export default function DatePicker({ onSelect, selectedDate, title }: DatePicker
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [prefetchedDates]);
 
   const today = useMemo(() => {
     const d = new Date();
@@ -79,14 +87,6 @@ export default function DatePicker({ onSelect, selectedDate, title }: DatePicker
     const dateOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate());
     return dateOnly < today;
   };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center py-16">
-        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <div className="animate-fadeInUp">
@@ -143,12 +143,13 @@ export default function DatePicker({ onSelect, selectedDate, title }: DatePicker
             return (
               <button
                 key={dateStr}
-                disabled={!available || past}
+                disabled={loading || !available || past}
                 onClick={() => onSelect(dateStr)}
                 className={`
                   relative h-11 rounded-xl text-sm font-semibold transition-all duration-200
-                  ${
-                    selected
+                  ${loading && !past
+                    ? 'bg-gray-100 text-gray-300 animate-pulse'
+                    : selected
                       ? 'bg-primary text-white shadow-md shadow-primary/30 scale-105'
                       : available && !past
                         ? 'bg-gray-50 text-foreground hover:bg-primary/10 hover:text-primary cursor-pointer'
