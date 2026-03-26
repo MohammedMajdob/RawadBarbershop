@@ -165,8 +165,9 @@ export default function AdminPage() {
     setManualPhone('');
     setManualSlots([]);
     try {
-      const dates = await getAvailableDates();
-      setManualAvailDates(dates);
+      const res = await getAvailableDates();
+      const available = (res.dates || res).filter((d: { available: boolean }) => d.available).map((d: { date: string }) => d.date);
+      setManualAvailDates(available);
     } catch (e) {
       console.error(e);
     }
