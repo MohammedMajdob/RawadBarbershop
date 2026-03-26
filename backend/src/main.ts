@@ -1,3 +1,6 @@
+// Set timezone to Israel so Date operations use local time
+process.env.TZ = 'Asia/Jerusalem';
+
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { json, urlencoded } from 'express';
