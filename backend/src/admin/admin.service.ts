@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -36,6 +36,67 @@ export class AdminService {
       where: { id },
       data: { status: 'CANCELLED', cancelledBy: 'admin' },
     });
+  }
+
+  async createManualBooking(dto: { date: string; time: string; name: string; phone: string }) {
+    // Normalize phone to E.164
+    const normalizedPhone = dto.phone.startsWith('+')
+      ? dto.phone
+      : dto.phone.startsWith('0')
+        ? `+972${dto.phone.slice(1)}`
+        : `+972${dto.phone}`;
+
+    const booking = await this.prisma.$transaction(async (tx) => {
+      // Remove any hold for this slot
+      await tx.booking.deleteMany({
+        where: { date: dto.date, time: dto.time, name: '_hold_', status: 'PENDING' },
+      });
+
+      // Check slot availability
+      const conflict = await tx.booking.findFirst({
+        where: {
+          date: dto.date,
+          time: dto.time,
+          OR: [
+            { status: { in: ['CONFIRMED', 'COMPLETED'] } },
+            { status: 'PENDING', expiresAt: { gt: new Date() } },
+          ],
+        },
+      });
+
+      if (conflict) {
+        throw new ConflictException('השעה הזו כבר תפוסה');
+      }
+
+      // Link to existing customer if phone matches (don't create new customer)
+      const existingCustomer = await tx.customer.findUnique({
+        where: { phone: normalizedPhone },
+      });
+
+      return tx.booking.create({
+        data: {
+          name: dto.name,
+          phone: normalizedPhone,
+          date: dto.date,
+          time: dto.time,
+          status: 'CONFIRMED',
+          customerId: existingCustomer?.id || null,
+          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+        },
+      });
+    });
+
+    return {
+      message: 'התור נוצר בהצלחה',
+      booking: {
+        id: booking.id,
+        name: booking.name,
+        phone: booking.phone,
+        date: booking.date,
+        time: booking.time,
+        status: booking.status,
+      },
+    };
   }
 
   async completeBooking(id: string) {

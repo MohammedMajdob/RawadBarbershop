@@ -31,6 +31,11 @@ export class AdminController {
     return this.adminService.getBookings(date, status);
   }
 
+  @Post('bookings/manual')
+  createManualBooking(@Body() body: { date: string; time: string; name: string; phone: string }) {
+    return this.adminService.createManualBooking(body);
+  }
+
   @Delete('bookings/:id')
   cancelBooking(@Param('id') id: string) {
     return this.adminService.cancelBooking(id);

@@ -196,6 +196,17 @@ export async function cancelBooking(token: string, id: string) {
   });
 }
 
+export async function createManualBooking(
+  token: string,
+  data: { date: string; time: string; name: string; phone: string },
+) {
+  return fetchApi('/admin/bookings/manual', {
+    method: 'POST',
+    headers: authHeaders(token),
+    body: JSON.stringify(data),
+  });
+}
+
 export async function completeBooking(token: string, id: string) {
   return fetchApi(`/admin/bookings/${id}/complete`, {
     method: 'PATCH',

@@ -6,6 +6,9 @@ import {
   getAdminBookings,
   cancelBooking,
   completeBooking,
+  createManualBooking,
+  getAvailableDates,
+  getAvailableSlots,
   getAdminSettings,
   updateAdminSettings,
   getHeroImages,
@@ -76,6 +79,14 @@ export default function AdminPage() {
   const [selectedDate, setSelectedDate] = useState(() => new Date().toLocaleDateString('en-CA'));
   const [bookingView, setBookingView] = useState<'active' | 'completed' | 'cancelled'>('active');
   const [confirmPopup, setConfirmPopup] = useState<{ type: 'complete' | 'cancel'; booking: Booking } | null>(null);
+  const [showManualBooking, setShowManualBooking] = useState(false);
+  const [manualDate, setManualDate] = useState('');
+  const [manualSlots, setManualSlots] = useState<{ time: string; available: boolean }[]>([]);
+  const [manualTime, setManualTime] = useState('');
+  const [manualName, setManualName] = useState('');
+  const [manualPhone, setManualPhone] = useState('');
+  const [manualLoading, setManualLoading] = useState(false);
+  const [manualAvailDates, setManualAvailDates] = useState<string[]>([]);
   const [newHeroFile, setNewHeroFile] = useState<File | null>(null);
   const [newHeroTitle, setNewHeroTitle] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -143,6 +154,54 @@ export default function AdminPage() {
       console.error(e);
     } finally {
       setConfirmPopup(null);
+    }
+  };
+
+  const openManualBooking = async () => {
+    setShowManualBooking(true);
+    setManualDate('');
+    setManualTime('');
+    setManualName('');
+    setManualPhone('');
+    setManualSlots([]);
+    try {
+      const dates = await getAvailableDates();
+      setManualAvailDates(dates);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleManualDateChange = async (date: string) => {
+    setManualDate(date);
+    setManualTime('');
+    try {
+      const data = await getAvailableSlots(date);
+      setManualSlots(data.slots || []);
+    } catch (e) {
+      console.error(e);
+      setManualSlots([]);
+    }
+  };
+
+  const handleCreateManualBooking = async () => {
+    if (!manualDate || !manualTime || !manualName || !manualPhone) return;
+    setManualLoading(true);
+    try {
+      await createManualBooking(token, {
+        date: manualDate,
+        time: manualTime,
+        name: manualName,
+        phone: manualPhone,
+      });
+      setShowManualBooking(false);
+      setSelectedDate(manualDate);
+      loadBookings();
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'שגיאה';
+      alert(msg);
+    } finally {
+      setManualLoading(false);
     }
   };
 
@@ -406,7 +465,8 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* View toggle: active / completed / cancelled */}
+            {/* View toggle + add button */}
+            <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex gap-1 p-1 bg-gray-100 rounded-xl w-fit">
               {([
                 { key: 'active' as const, label: 'תורים פעילים' },
@@ -425,6 +485,13 @@ export default function AdminPage() {
                   {label}
                 </button>
               ))}
+            </div>
+            <button
+              onClick={openManualBooking}
+              className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary-dark transition-colors"
+            >
+              + הוסף תור
+            </button>
             </div>
 
             {/* Bookings list */}
@@ -525,6 +592,111 @@ export default function AdminPage() {
                   }`}
                 >
                   {confirmPopup.type === 'complete' ? 'הושלם' : 'בטל תור'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Manual Booking Modal ── */}
+        {showManualBooking && (
+          <div className="fixed inset-0 bg-black/40 z-[100] flex items-center justify-center px-4" onClick={() => setShowManualBooking(false)}>
+            <div className="bg-card rounded-2xl p-6 w-full max-w-md shadow-2xl border border-border animate-scaleIn max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-lg font-bold text-foreground text-center mb-4">הוספת תור ידני</h3>
+
+              {/* Date selection */}
+              <div className="mb-4">
+                <label className="text-xs text-muted block mb-1.5 font-medium">בחר תאריך</label>
+                <div className="flex flex-wrap gap-2">
+                  {manualAvailDates.map((d) => {
+                    const [y, m, day] = d.split('-').map(Number);
+                    const date = new Date(y, m - 1, day);
+                    const dayName = dayNames[date.getDay()];
+                    return (
+                      <button
+                        key={d}
+                        onClick={() => handleManualDateChange(d)}
+                        className={`px-3 py-2 rounded-xl text-sm font-bold border-2 transition-all ${
+                          manualDate === d
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-border text-muted hover:border-primary/50'
+                        }`}
+                      >
+                        <span className="block text-xs">{dayName}</span>
+                        <span>{day}/{m}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Time selection */}
+              {manualDate && (
+                <div className="mb-4">
+                  <label className="text-xs text-muted block mb-1.5 font-medium">בחר שעה</label>
+                  {manualSlots.length === 0 ? (
+                    <p className="text-sm text-muted">אין שעות פנויות ליום זה</p>
+                  ) : (
+                    <div className="grid grid-cols-4 gap-2">
+                      {manualSlots.filter((s) => s.available).map((slot) => (
+                        <button
+                          key={slot.time}
+                          onClick={() => setManualTime(slot.time)}
+                          className={`px-2 py-2.5 rounded-xl text-sm font-bold border-2 transition-all ${
+                            manualTime === slot.time
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-border text-foreground hover:border-primary/50'
+                          }`}
+                        >
+                          {slot.time}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Name & Phone */}
+              {manualTime && (
+                <div className="space-y-3 mb-5">
+                  <div>
+                    <label className="text-xs text-muted block mb-1.5 font-medium">שם הלקוח</label>
+                    <input
+                      type="text"
+                      value={manualName}
+                      onChange={(e) => setManualName(e.target.value)}
+                      placeholder="שם מלא"
+                      className="w-full px-3 py-2.5 border-2 border-border rounded-xl outline-none focus:border-primary text-sm bg-card transition-colors text-right"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted block mb-1.5 font-medium">מספר טלפון</label>
+                    <input
+                      type="tel"
+                      value={manualPhone}
+                      onChange={(e) => setManualPhone(e.target.value)}
+                      placeholder="050-1234567"
+                      className="w-full px-3 py-2.5 border-2 border-border rounded-xl outline-none focus:border-primary text-sm bg-card transition-colors"
+                      dir="ltr"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowManualBooking(false)}
+                  className="flex-1 py-3 rounded-xl border-2 border-border text-muted font-bold text-sm hover:bg-gray-50 transition-colors"
+                >
+                  ביטול
+                </button>
+                <button
+                  onClick={handleCreateManualBooking}
+                  disabled={!manualDate || !manualTime || !manualName || !manualPhone || manualLoading}
+                  className="flex-1 py-3 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary-dark transition-colors disabled:opacity-40"
+                >
+                  {manualLoading ? 'יוצר...' : 'צור תור'}
                 </button>
               </div>
             </div>
