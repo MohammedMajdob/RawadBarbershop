@@ -1,8 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   adminLogin,
+  holdSlot,
+  releaseHold,
+  renewHold,
   getAdminBookings,
   cancelBooking,
   completeBooking,
@@ -86,6 +89,8 @@ export default function AdminPage() {
   const [manualName, setManualName] = useState('');
   const [manualPhone, setManualPhone] = useState('');
   const [manualLoading, setManualLoading] = useState(false);
+  const [manualHoldId, setManualHoldId] = useState<string | null>(null);
+  const manualHoldStartRef = useRef<number>(0);
   const [newHeroFile, setNewHeroFile] = useState<File | null>(null);
   const [newHeroTitle, setNewHeroTitle] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -156,6 +161,41 @@ export default function AdminPage() {
     }
   };
 
+  // Heartbeat for admin manual booking hold
+  useEffect(() => {
+    if (!manualHoldId) return;
+    manualHoldStartRef.current = Date.now();
+
+    const interval = setInterval(async () => {
+      if (Date.now() - manualHoldStartRef.current > 120 * 1000) {
+        clearInterval(interval);
+        setManualHoldId(null);
+        setManualStep(1);
+        setManualTime('');
+        return;
+      }
+      if (document.visibilityState === 'visible') {
+        try {
+          await renewHold(manualHoldId);
+        } catch {
+          clearInterval(interval);
+          setManualHoldId(null);
+          setManualStep(1);
+          setManualTime('');
+        }
+      }
+    }, 8000);
+
+    return () => clearInterval(interval);
+  }, [manualHoldId]);
+
+  const releaseManualHold = async () => {
+    if (manualHoldId) {
+      try { await releaseHold(manualHoldId); } catch { /* ignore */ }
+      setManualHoldId(null);
+    }
+  };
+
   const openManualBooking = () => {
     setShowManualBooking(true);
     setManualStep(0);
@@ -163,6 +203,26 @@ export default function AdminPage() {
     setManualTime('');
     setManualName('');
     setManualPhone('');
+    setManualHoldId(null);
+  };
+
+  const closeManualBooking = async () => {
+    await releaseManualHold();
+    setShowManualBooking(false);
+  };
+
+  const handleManualTimeSelect = async (time: string) => {
+    // Release previous hold if changing time
+    await releaseManualHold();
+    try {
+      const res = await holdSlot({ date: manualDate, time });
+      setManualHoldId(res.holdId);
+      setManualTime(time);
+      setManualStep(2);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'השעה תפוסה';
+      alert(msg);
+    }
   };
 
   const handleCreateManualBooking = async () => {
@@ -175,6 +235,7 @@ export default function AdminPage() {
         name: manualName,
         phone: manualPhone,
       });
+      setManualHoldId(null); // hold gets cleaned up by the booking creation
       setShowManualBooking(false);
       setSelectedDate(manualDate);
       loadBookings();
@@ -581,11 +642,11 @@ export default function AdminPage() {
 
         {/* ── Manual Booking Modal ── */}
         {showManualBooking && (
-          <div className="fixed inset-0 bg-black/40 z-[100] flex items-center justify-center px-4" onClick={() => setShowManualBooking(false)}>
+          <div className="fixed inset-0 bg-black/40 z-[100] flex items-center justify-center px-4" onClick={closeManualBooking}>
             <div className="bg-card rounded-2xl p-6 w-full max-w-lg shadow-2xl border border-border animate-scaleIn max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-foreground">הוספת תור ידני</h3>
-                <button onClick={() => setShowManualBooking(false)} className="text-muted hover:text-foreground text-xl leading-none">&times;</button>
+                <button onClick={closeManualBooking} className="text-muted hover:text-foreground text-xl leading-none">&times;</button>
               </div>
 
               {/* Step 0: Date */}
@@ -609,10 +670,7 @@ export default function AdminPage() {
                     date={manualDate}
                     title="בחר שעה"
                     selectedTime={manualTime}
-                    onSelect={(time) => {
-                      setManualTime(time);
-                      setManualStep(2);
-                    }}
+                    onSelect={handleManualTimeSelect}
                   />
                 </div>
               )}
@@ -620,7 +678,7 @@ export default function AdminPage() {
               {/* Step 2: Name & Phone */}
               {manualStep === 2 && manualTime && (
                 <div>
-                  <button onClick={() => setManualStep(1)} className="text-sm text-primary font-bold mb-3 hover:text-primary-dark transition-colors">&rarr; חזרה לשעה</button>
+                  <button onClick={async () => { await releaseManualHold(); setManualStep(1); setManualTime(''); }} className="text-sm text-primary font-bold mb-3 hover:text-primary-dark transition-colors">&rarr; חזרה לשעה</button>
                   <p className="text-sm text-muted text-center mb-4">
                     {formatDateHebrew(manualDate)} בשעה {manualTime}
                   </p>
@@ -649,7 +707,7 @@ export default function AdminPage() {
                   </div>
                   <div className="flex gap-3">
                     <button
-                      onClick={() => setShowManualBooking(false)}
+                      onClick={closeManualBooking}
                       className="flex-1 py-3 rounded-xl border-2 border-border text-muted font-bold text-sm hover:bg-gray-50 transition-colors"
                     >
                       ביטול
