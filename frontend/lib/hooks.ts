@@ -23,30 +23,31 @@ async function authFetcher([endpoint, token]: [string, string]) {
   return res.json();
 }
 
-// Available dates - cached for 2 minutes, revalidates in background
+// Available dates - revalidates on focus and every 30s
 export function useAvailableDates() {
   return useSWR('/availability/dates', fetcher, {
-    revalidateOnFocus: false,
-    dedupingInterval: 60000, // don't refetch within 60s
+    revalidateOnFocus: true,
+    refreshInterval: 30000,
+    dedupingInterval: 10000,
     keepPreviousData: true,
   });
 }
 
-// Available time slots - cached per date, polls every 5s in background
+// Available time slots - polls every 5s
 export function useAvailableSlots(date: string | null) {
   return useSWR(date ? `/availability?date=${date}` : null, fetcher, {
     refreshInterval: 5000,
     revalidateOnFocus: true,
-    keepPreviousData: true,
+    keepPreviousData: false,
   });
 }
 
-// Hero images - rarely change, cache aggressively
+// Hero images - revalidate on focus
 export function useHeroImages() {
   return useSWR('/availability/hero', fetcher, {
-    revalidateOnFocus: false,
-    dedupingInterval: 300000, // 5 min
-    keepPreviousData: true,
+    revalidateOnFocus: true,
+    dedupingInterval: 30000, // 30 sec
+    keepPreviousData: false,
   });
 }
 
