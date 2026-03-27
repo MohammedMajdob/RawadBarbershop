@@ -12,4 +12,4 @@ RUN npm run build
 
 EXPOSE 3002
 
-CMD ["sh", "-c", "npx prisma migrate deploy --config prisma.config.ts && npx tsx prisma/seed.ts && node dist/src/main"]
+CMD ["sh", "-c", "npx prisma migrate deploy --config prisma.config.ts && node dist/src/main"]
