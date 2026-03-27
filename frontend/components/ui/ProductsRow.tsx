@@ -23,9 +23,9 @@ export default function ProductsRow({ images }: ProductsRowProps) {
         {images.map((img) => (
           <div
             key={img.id}
-            className="flex-shrink-0 w-[140px] bg-white rounded-2xl overflow-hidden"
+            className="flex-shrink-0 w-[110px] bg-white rounded-xl overflow-hidden"
           >
-            <div className="w-full h-[150px] bg-white flex items-center justify-center p-2">
+            <div className="w-[110px] h-[110px] bg-white flex items-center justify-center p-2">
               <img
                 src={img.url}
                 alt={img.title || ''}
