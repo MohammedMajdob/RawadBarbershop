@@ -120,14 +120,7 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [holdId]);
 
-  // Release hold when switching away from booking tab
-  useEffect(() => {
-    if (activeTab !== 'booking' && holdId) {
-      releaseHold(holdId).catch(() => {});
-      setHoldId(null);
-      setHoldExpiresAt(null);
-    }
-  }, [activeTab, holdId]);
+  // Hold remains active when switching tabs — heartbeat keeps it alive
 
   // Check for existing token on mount
   useEffect(() => {

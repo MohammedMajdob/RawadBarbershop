@@ -2,8 +2,11 @@
 
 function fixCloudinaryUrl(url: string): string {
   if (!url.includes('cloudinary.com')) return url;
-  // Override any existing transformation to show full image with white bg
-  return url.replace('/upload/', '/upload/c_pad,b_white,w_500,h_500,q_auto,f_webp/');
+  // Replace ALL existing transformations and use c_pad to show full image
+  return url.replace(
+    /\/upload\/.*?\/(rawad-barbershop\/)/,
+    '/upload/c_pad,b_white,w_400,h_400,q_auto,f_webp/$1',
+  );
 }
 
 interface ProductImage {
