@@ -20,31 +20,33 @@ export default function Logo({
   return (
     <div className="w-full bg-white">
       {/* Cover / Header section */}
-      <div className="relative w-full h-[220px] md:h-[250px] overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900">
-        {headerType === 'video' && headerMediaUrl ? (
-          <video
-            src={headerMediaUrl}
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
-            className="w-full h-full object-cover"
-          />
-        ) : headerMediaUrl ? (
-          <img
-            src={headerMediaUrl}
-            alt={businessName}
-            className="w-full h-full object-cover"
-            style={{ objectPosition: 'center 50%' }}
-            loading="eager"
-          />
-        ) : null}
+      <div className="relative">
+        <div className="w-full h-[220px] md:h-[250px] overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900">
+          {headerType === 'video' && headerMediaUrl ? (
+            <video
+              src={headerMediaUrl}
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="auto"
+              className="w-full h-full object-cover"
+            />
+          ) : headerMediaUrl ? (
+            <img
+              src={headerMediaUrl}
+              alt={businessName}
+              className="w-full h-full object-cover"
+              style={{ objectPosition: 'center 50%' }}
+              loading="eager"
+            />
+          ) : null}
 
-        {/* Dark gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20" />
+          {/* Dark gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20" />
+        </div>
 
-        {/* Logo overlapping bottom-left */}
+        {/* Logo overlapping bottom-left — outside overflow-hidden */}
         {logoUrl && (
           <div className="absolute -bottom-10 left-4 z-20">
             <div className="w-[88px] h-[88px] rounded-2xl bg-white p-1 shadow-xl border-2 border-[#c9a84c]/30">
