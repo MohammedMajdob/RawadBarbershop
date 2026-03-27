@@ -295,6 +295,32 @@ export async function uploadImage(token: string, file: File): Promise<{ url: str
   return data;
 }
 
+export async function uploadSmallImage(token: string, file: File): Promise<{ url: string }> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/upload/small-image`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+  } catch {
+    throw new Error('שגיאת רשת - נסה שוב');
+  }
+
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error(`שגיאת שרת (${res.status})`);
+  }
+
+  if (!res.ok) throw new Error(data.message || 'שגיאה בהעלאת תמונה');
+  return data;
+}
+
 // Hero Images
 export async function getHeroImages(token: string, includeAll = false) {
   const query = includeAll ? '?all=true' : '';

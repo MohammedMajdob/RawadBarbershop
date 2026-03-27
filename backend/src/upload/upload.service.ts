@@ -48,6 +48,40 @@ export class UploadService {
     });
   }
 
+  async uploadSmallImage(file: Express.Multer.File): Promise<{ url: string }> {
+    return new Promise((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream(
+          {
+            folder: 'rawad-barbershop',
+            transformation: [
+              {
+                width: 500,
+                height: 500,
+                crop: 'limit',
+                quality: 'auto',
+                format: 'webp',
+              },
+            ],
+          },
+          (error, result) => {
+            if (error) {
+              this.logger.error('Cloudinary upload failed', error);
+              return reject(
+                new Error(
+                  error instanceof Error
+                    ? error.message
+                    : 'Cloudinary upload error',
+                ),
+              );
+            }
+            resolve({ url: result!.secure_url });
+          },
+        )
+        .end(file.buffer);
+    });
+  }
+
   async uploadVideo(file: Express.Multer.File): Promise<{ url: string }> {
     return new Promise((resolve, reject) => {
       cloudinary.uploader

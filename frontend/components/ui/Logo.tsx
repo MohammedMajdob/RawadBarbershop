@@ -1,7 +1,5 @@
 'use client';
 
-import Image from 'next/image';
-
 interface LogoProps {
   headerType?: string;
   headerMediaUrl?: string | null;
@@ -22,7 +20,7 @@ export default function Logo({
   return (
     <div className="w-full bg-white">
       {/* Cover / Header section */}
-      <div className="relative w-full h-[220px] md:h-[250px] overflow-hidden">
+      <div className="relative w-full h-[220px] md:h-[250px] overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900">
         {headerType === 'video' && headerMediaUrl ? (
           <video
             src={headerMediaUrl}
@@ -34,7 +32,6 @@ export default function Logo({
             className="w-full h-full object-cover"
           />
         ) : headerMediaUrl ? (
-          // Dynamic image from Cloudinary
           <img
             src={headerMediaUrl}
             alt={businessName}
@@ -42,51 +39,32 @@ export default function Logo({
             style={{ objectPosition: 'center 50%' }}
             loading="eager"
           />
-        ) : (
-          // Static fallback
-          <Image
-            src="/cover.jpg"
-            alt="Barber Shop"
-            fill
-            className="object-cover"
-            style={{ objectPosition: 'center 50%' }}
-            priority
-          />
-        )}
+        ) : null}
 
         {/* Dark gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20" />
 
         {/* Logo overlapping bottom-left */}
-        <div className="absolute -bottom-10 left-4 z-20">
-          <div className="w-[88px] h-[88px] rounded-2xl bg-white p-1 shadow-xl border-2 border-[#c9a84c]/30">
-            <div className="w-full h-full rounded-xl overflow-hidden bg-white flex items-center justify-center">
-              {logoUrl ? (
+        {logoUrl && (
+          <div className="absolute -bottom-10 left-4 z-20">
+            <div className="w-[88px] h-[88px] rounded-2xl bg-white p-1 shadow-xl border-2 border-[#c9a84c]/30">
+              <div className="w-full h-full rounded-xl overflow-hidden bg-white flex items-center justify-center">
                 <img
                   src={logoUrl}
                   alt={businessName}
                   className="object-contain w-full h-full"
                   loading="eager"
                 />
-              ) : (
-                <Image
-                  src="/logo.png"
-                  alt="Gentlemen Barber Shop 1996"
-                  width={120}
-                  height={120}
-                  className="object-contain w-full h-full"
-                  priority
-                />
-              )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Business info section */}
       <div className="px-4 pt-3 pb-2">
         {/* Name + location next to logo */}
-        <div className="pl-[104px]">
+        <div className={logoUrl ? 'pl-[104px]' : ''}>
           <h1 className="text-lg font-black text-gray-900">{businessName}</h1>
           <div className="flex items-center gap-1.5 mt-0.5">
             <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

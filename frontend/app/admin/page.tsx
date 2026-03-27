@@ -18,6 +18,7 @@ import {
   deleteHeroImage,
   uploadImage,
   uploadVideo,
+  uploadSmallImage,
   getProductImages,
   addProductImage,
   toggleProductImage,
@@ -439,7 +440,7 @@ export default function AdminPage() {
     if (!logoFile) return;
     setLogoUploading(true);
     try {
-      const { url } = await uploadImage(token, logoFile);
+      const { url } = await uploadSmallImage(token, logoFile);
       await updateAdminSettings(token, { logoUrl: url });
       setLogoFile(null);
       const updated = await getAdminSettings(token);
@@ -457,7 +458,7 @@ export default function AdminPage() {
     if (!newProductFile) return;
     setProductUploading(true);
     try {
-      const { url } = await uploadImage(token, newProductFile);
+      const { url } = await uploadSmallImage(token, newProductFile);
       await addProductImage(token, url, newProductTitle || undefined);
       setNewProductFile(null);
       setNewProductTitle('');
