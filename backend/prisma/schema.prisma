@@ -46,6 +46,9 @@ model Settings {
   advanceBookingDays Int      @default(14) // how many days ahead customers can book
   schedule           Json?    // per-day schedule: { "0": { "isOpen": false, "ranges": [] }, "3": { "isOpen": true, "ranges": [{"start":"09:00","end":"17:00"}] } }
   blockedDates       String[] @default([])
+  headerType         String   @default("image")
+  headerMediaUrl     String?
+  logoUrl            String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 }
@@ -69,6 +72,15 @@ model Customer {
 }
 
 model HeroImage {
+  id        String   @id @default(uuid())
+  url       String
+  title     String?
+  order     Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model ProductImage {
   id        String   @id @default(uuid())
   url       String
   title     String?

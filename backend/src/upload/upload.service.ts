@@ -21,13 +21,51 @@ export class UploadService {
           {
             folder: 'rawad-barbershop',
             transformation: [
-              { width: 1200, height: 600, crop: 'fill', quality: 'auto', format: 'webp' },
+              {
+                width: 1200,
+                height: 600,
+                crop: 'fill',
+                quality: 'auto',
+                format: 'webp',
+              },
             ],
           },
           (error, result) => {
             if (error) {
               this.logger.error('Cloudinary upload failed', error);
-              return reject(error);
+              return reject(
+                new Error(
+                  error instanceof Error
+                    ? error.message
+                    : 'Cloudinary upload error',
+                ),
+              );
+            }
+            resolve({ url: result!.secure_url });
+          },
+        )
+        .end(file.buffer);
+    });
+  }
+
+  async uploadVideo(file: Express.Multer.File): Promise<{ url: string }> {
+    return new Promise((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream(
+          {
+            folder: 'rawad-barbershop',
+            resource_type: 'video',
+          },
+          (error, result) => {
+            if (error) {
+              this.logger.error('Cloudinary video upload failed', error);
+              return reject(
+                new Error(
+                  error instanceof Error
+                    ? error.message
+                    : 'Cloudinary upload error',
+                ),
+              );
             }
             resolve({ url: result!.secure_url });
           },

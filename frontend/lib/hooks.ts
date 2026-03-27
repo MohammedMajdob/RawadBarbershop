@@ -51,6 +51,24 @@ export function useHeroImages() {
   });
 }
 
+// Site settings (header media, logo, business info)
+export function useSiteSettings() {
+  return useSWR('/availability/site-settings', fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 60000, // 1 min
+    keepPreviousData: true,
+  });
+}
+
+// Public product images
+export function useProductImages() {
+  return useSWR('/availability/products', fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 60000, // 1 min
+    keepPreviousData: true,
+  });
+}
+
 // Customer bookings
 export function useMyBookings(token: string | null) {
   return useSWR(

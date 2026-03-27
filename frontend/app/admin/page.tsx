@@ -17,6 +17,11 @@ import {
   toggleHeroImage,
   deleteHeroImage,
   uploadImage,
+  uploadVideo,
+  getProductImages,
+  addProductImage,
+  toggleProductImage,
+  deleteProductImage,
 } from '@/lib/api';
 import DatePicker from '@/components/booking/DatePicker';
 import TimePicker from '@/components/booking/TimePicker';
@@ -57,9 +62,20 @@ interface Settings {
   advanceBookingDays: number;
   schedule: Schedule;
   blockedDates: string[];
+  headerType: 'image' | 'video';
+  headerMediaUrl: string | null;
+  logoUrl: string | null;
 }
 
 interface HeroImage {
+  id: string;
+  url: string;
+  title: string | null;
+  order: number;
+  active: boolean;
+}
+
+interface ProductImage {
   id: string;
   url: string;
   title: string | null;
@@ -94,6 +110,19 @@ export default function AdminPage() {
   const [newHeroFile, setNewHeroFile] = useState<File | null>(null);
   const [newHeroTitle, setNewHeroTitle] = useState('');
   const [uploading, setUploading] = useState(false);
+
+  // Header / Logo
+  const [headerFile, setHeaderFile] = useState<File | null>(null);
+  const [headerType, setHeaderType] = useState<'image' | 'video'>('image');
+  const [headerUploading, setHeaderUploading] = useState(false);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoUploading, setLogoUploading] = useState(false);
+
+  // Products
+  const [productImages, setProductImages] = useState<ProductImage[]>([]);
+  const [newProductFile, setNewProductFile] = useState<File | null>(null);
+  const [newProductTitle, setNewProductTitle] = useState('');
+  const [productUploading, setProductUploading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,13 +166,23 @@ export default function AdminPage() {
     }
   }, [token]);
 
+  const loadProductImages = useCallback(async () => {
+    try {
+      const data = await getProductImages(token, true);
+      setProductImages(data);
+    } catch (e) {
+      console.error(e);
+    }
+  }, [token]);
+
   useEffect(() => {
     if (token) {
       loadBookings();
       loadSettings();
       loadHeroImages();
+      loadProductImages();
     }
-  }, [token, loadBookings, loadSettings, loadHeroImages]);
+  }, [token, loadBookings, loadSettings, loadHeroImages, loadProductImages]);
 
   const handleConfirmAction = async () => {
     if (!confirmPopup) return;
@@ -366,6 +405,84 @@ export default function AdminPage() {
     try {
       await deleteHeroImage(token, id);
       loadHeroImages();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // ── Header / Logo handlers ──────────────────────────
+
+  const handleUploadHeader = async () => {
+    if (!headerFile) return;
+    setHeaderUploading(true);
+    try {
+      let url: string;
+      if (headerType === 'video') {
+        const res = await uploadVideo(token, headerFile);
+        url = res.url;
+      } else {
+        const res = await uploadImage(token, headerFile);
+        url = res.url;
+      }
+      await updateAdminSettings(token, { headerType, headerMediaUrl: url });
+      setHeaderFile(null);
+      const updated = await getAdminSettings(token);
+      setSettings(updated);
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'שגיאה בהעלאה');
+    } finally {
+      setHeaderUploading(false);
+    }
+  };
+
+  const handleUploadLogo = async () => {
+    if (!logoFile) return;
+    setLogoUploading(true);
+    try {
+      const { url } = await uploadImage(token, logoFile);
+      await updateAdminSettings(token, { logoUrl: url });
+      setLogoFile(null);
+      const updated = await getAdminSettings(token);
+      setSettings(updated);
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'שגיאה בהעלאת לוגו');
+    } finally {
+      setLogoUploading(false);
+    }
+  };
+
+  // ── Product image handlers ──────────────────────────
+
+  const handleAddProductImage = async () => {
+    if (!newProductFile) return;
+    setProductUploading(true);
+    try {
+      const { url } = await uploadImage(token, newProductFile);
+      await addProductImage(token, url, newProductTitle || undefined);
+      setNewProductFile(null);
+      setNewProductTitle('');
+      loadProductImages();
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'שגיאה בהעלאת תמונה');
+    } finally {
+      setProductUploading(false);
+    }
+  };
+
+  const handleToggleProductImage = async (id: string) => {
+    try {
+      await toggleProductImage(token, id);
+      loadProductImages();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleDeleteProductImage = async (id: string) => {
+    if (!confirm('למחוק תמונת מוצר זו?')) return;
+    try {
+      await deleteProductImage(token, id);
+      loadProductImages();
     } catch (e) {
       console.error(e);
     }
@@ -919,13 +1036,131 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ── Hero Images Tab ── */}
+        {/* ── Media Tab ── */}
         {activeTab === 'hero' && (
           <div className="space-y-5 animate-fadeInUp pb-8">
-            {/* Add new */}
+
+            {/* ── Header media ── */}
             <div className="bg-card rounded-2xl p-5 border border-border">
-              <h3 className="font-bold text-foreground mb-4">הוספת תמונה</h3>
+              <h3 className="font-bold text-foreground mb-1">כותרת עליונה (Header)</h3>
+              <p className="text-xs text-muted mb-4">תמונה או סרטון שיוצג בחלק העליון של הדף</p>
+
+              {/* Current preview */}
+              {settings?.headerMediaUrl && (
+                <div className="mb-4 rounded-xl overflow-hidden h-32 bg-gray-100 relative">
+                  {settings.headerType === 'video' ? (
+                    <video
+                      src={settings.headerMediaUrl}
+                      muted
+                      loop
+                      playsInline
+                      autoPlay
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <img
+                      src={settings.headerMediaUrl}
+                      alt="header"
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+                  <span className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
+                    {settings.headerType === 'video' ? 'סרטון' : 'תמונה'}
+                  </span>
+                </div>
+              )}
+
               <div className="space-y-3">
+                {/* Type toggle */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setHeaderType('image')}
+                    className={`flex-1 py-2 rounded-xl text-sm font-bold border-2 transition-colors ${
+                      headerType === 'image'
+                        ? 'border-primary bg-primary/5 text-primary'
+                        : 'border-border text-muted'
+                    }`}
+                  >
+                    תמונה
+                  </button>
+                  <button
+                    onClick={() => setHeaderType('video')}
+                    className={`flex-1 py-2 rounded-xl text-sm font-bold border-2 transition-colors ${
+                      headerType === 'video'
+                        ? 'border-primary bg-primary/5 text-primary'
+                        : 'border-border text-muted'
+                    }`}
+                  >
+                    סרטון
+                  </button>
+                </div>
+
+                <label className="block w-full cursor-pointer">
+                  <div className="w-full px-3 py-4 border-2 border-dashed border-border rounded-xl text-center text-sm text-muted hover:border-primary transition-colors">
+                    {headerFile ? headerFile.name : headerType === 'video' ? 'לחץ לבחירת סרטון (MP4)' : 'לחץ לבחירת תמונה'}
+                  </div>
+                  <input
+                    type="file"
+                    accept={headerType === 'video' ? 'video/*' : 'image/*'}
+                    className="hidden"
+                    onChange={(e) => setHeaderFile(e.target.files?.[0] || null)}
+                  />
+                </label>
+
+                <button
+                  onClick={handleUploadHeader}
+                  disabled={!headerFile || headerUploading}
+                  className="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary-dark transition-colors disabled:opacity-40"
+                >
+                  {headerUploading ? 'מעלה...' : 'עדכן כותרת'}
+                </button>
+              </div>
+            </div>
+
+            {/* ── Logo ── */}
+            <div className="bg-card rounded-2xl p-5 border border-border">
+              <h3 className="font-bold text-foreground mb-1">לוגו</h3>
+              <p className="text-xs text-muted mb-4">הלוגו המוצג מעל אזור הכותרת</p>
+
+              {settings?.logoUrl && (
+                <div className="mb-4 w-20 h-20 rounded-2xl overflow-hidden border-2 border-border bg-gray-50">
+                  <img
+                    src={settings.logoUrl}
+                    alt="logo"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              )}
+
+              <div className="space-y-3">
+                <label className="block w-full cursor-pointer">
+                  <div className="w-full px-3 py-4 border-2 border-dashed border-border rounded-xl text-center text-sm text-muted hover:border-primary transition-colors">
+                    {logoFile ? logoFile.name : 'לחץ לבחירת לוגו'}
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
+                  />
+                </label>
+
+                <button
+                  onClick={handleUploadLogo}
+                  disabled={!logoFile || logoUploading}
+                  className="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary-dark transition-colors disabled:opacity-40"
+                >
+                  {logoUploading ? 'מעלה...' : 'עדכן לוגו'}
+                </button>
+              </div>
+            </div>
+
+            {/* ── Hero slider images ── */}
+            <div className="bg-card rounded-2xl p-5 border border-border">
+              <h3 className="font-bold text-foreground mb-1">תמונות Hero (סליידר)</h3>
+              <p className="text-xs text-muted mb-4">תמונות שיוצגו בסליידר הקידום. אם אין תמונות – הסליידר לא יוצג</p>
+
+              <div className="space-y-3 mb-5">
                 <label className="block w-full cursor-pointer">
                   <div className="w-full px-3 py-4 border-2 border-dashed border-border rounded-xl text-center text-sm text-muted hover:border-primary transition-colors">
                     {newHeroFile ? newHeroFile.name : 'לחץ לבחירת תמונה'}
@@ -952,11 +1187,7 @@ export default function AdminPage() {
                   {uploading ? 'מעלה...' : 'הוסף תמונה'}
                 </button>
               </div>
-            </div>
 
-            {/* Image list */}
-            <div className="bg-card rounded-2xl p-5 border border-border">
-              <h3 className="font-bold text-foreground mb-4">תמונות ({heroImages.length})</h3>
               {heroImages.length === 0 ? (
                 <p className="text-muted text-sm">אין תמונות</p>
               ) : (
@@ -966,22 +1197,15 @@ export default function AdminPage() {
                       key={img.id}
                       className={`flex items-center gap-3 p-3 rounded-xl border border-border ${!img.active ? 'opacity-50' : ''}`}
                     >
-                      <img
-                        src={img.url}
-                        alt={img.title || ''}
-                        className="w-20 h-14 object-cover rounded-lg"
-                      />
+                      <img src={img.url} alt={img.title || ''} className="w-20 h-14 object-cover rounded-lg flex-shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-foreground truncate">{img.title || 'ללא כותרת'}</p>
-                        <p className="text-xs text-muted truncate" dir="ltr">{img.url}</p>
                       </div>
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleToggleHeroImage(img.id)}
                           className={`text-xs px-3 py-1.5 rounded-lg font-bold transition-colors ${
-                            img.active
-                              ? 'bg-green-50 text-green-600 hover:bg-green-100'
-                              : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                            img.active ? 'bg-green-50 text-green-600 hover:bg-green-100' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
                           }`}
                         >
                           {img.active ? 'פעיל' : 'כבוי'}
@@ -998,6 +1222,75 @@ export default function AdminPage() {
                 </div>
               )}
             </div>
+
+            {/* ── Products ── */}
+            <div className="bg-card rounded-2xl p-5 border border-border">
+              <h3 className="font-bold text-foreground mb-1">תמונות מוצרים</h3>
+              <p className="text-xs text-muted mb-4">תוצגנה כשורה אופקית עם גלילה בתחתית מסך הלקוח</p>
+
+              <div className="space-y-3 mb-5">
+                <label className="block w-full cursor-pointer">
+                  <div className="w-full px-3 py-4 border-2 border-dashed border-border rounded-xl text-center text-sm text-muted hover:border-primary transition-colors">
+                    {newProductFile ? newProductFile.name : 'לחץ לבחירת תמונת מוצר'}
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => setNewProductFile(e.target.files?.[0] || null)}
+                  />
+                </label>
+                <input
+                  type="text"
+                  value={newProductTitle}
+                  onChange={(e) => setNewProductTitle(e.target.value)}
+                  placeholder="שם מוצר (אופציונלי)"
+                  className="w-full px-3 py-2.5 border-2 border-border rounded-xl outline-none focus:border-primary text-sm bg-card transition-colors text-right"
+                />
+                <button
+                  onClick={handleAddProductImage}
+                  disabled={!newProductFile || productUploading}
+                  className="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary-dark transition-colors disabled:opacity-40"
+                >
+                  {productUploading ? 'מעלה...' : 'הוסף מוצר'}
+                </button>
+              </div>
+
+              {productImages.length === 0 ? (
+                <p className="text-muted text-sm">אין תמונות מוצרים</p>
+              ) : (
+                <div className="space-y-3">
+                  {productImages.map((img) => (
+                    <div
+                      key={img.id}
+                      className={`flex items-center gap-3 p-3 rounded-xl border border-border ${!img.active ? 'opacity-50' : ''}`}
+                    >
+                      <img src={img.url} alt={img.title || ''} className="w-14 h-14 object-cover rounded-lg flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-foreground truncate">{img.title || 'ללא שם'}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleToggleProductImage(img.id)}
+                          className={`text-xs px-3 py-1.5 rounded-lg font-bold transition-colors ${
+                            img.active ? 'bg-green-50 text-green-600 hover:bg-green-100' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                          }`}
+                        >
+                          {img.active ? 'פעיל' : 'כבוי'}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteProductImage(img.id)}
+                          className="text-xs bg-red-50 text-red-500 px-3 py-1.5 rounded-lg font-bold hover:bg-red-100 transition-colors"
+                        >
+                          מחק
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
           </div>
         )}
       </div>

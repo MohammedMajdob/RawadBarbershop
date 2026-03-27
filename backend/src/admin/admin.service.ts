@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -38,7 +43,12 @@ export class AdminService {
     });
   }
 
-  async createManualBooking(dto: { date: string; time: string; name: string; phone: string }) {
+  async createManualBooking(dto: {
+    date: string;
+    time: string;
+    name: string;
+    phone: string;
+  }) {
     // Normalize phone to E.164
     const normalizedPhone = dto.phone.startsWith('+')
       ? dto.phone
@@ -49,7 +59,12 @@ export class AdminService {
     const booking = await this.prisma.$transaction(async (tx) => {
       // Remove any hold for this slot
       await tx.booking.deleteMany({
-        where: { date: dto.date, time: dto.time, name: '_hold_', status: 'PENDING' },
+        where: {
+          date: dto.date,
+          time: dto.time,
+          name: '_hold_',
+          status: 'PENDING',
+        },
       });
 
       // Check slot availability
@@ -209,7 +224,9 @@ export class AdminService {
   }
 
   async addHeroImage(url: string, title?: string) {
-    const count = await this.prisma.heroImage.count({ where: { active: true } });
+    const count = await this.prisma.heroImage.count({
+      where: { active: true },
+    });
     return this.prisma.heroImage.create({
       data: { url, title, order: count },
     });
@@ -238,5 +255,35 @@ export class AdminService {
     );
     await this.prisma.$transaction(updates);
     return this.getHeroImages(true);
+  }
+
+  // ── Product Images ─────────────────────────────────────
+
+  async getProductImages(includeInactive = false) {
+    const where = includeInactive ? {} : { active: true };
+    return this.prisma.productImage.findMany({
+      where,
+      orderBy: { order: 'asc' },
+    });
+  }
+
+  async addProductImage(url: string, title?: string) {
+    const count = await this.prisma.productImage.count();
+    return this.prisma.productImage.create({
+      data: { url, title, order: count },
+    });
+  }
+
+  async toggleProductImage(id: string) {
+    const image = await this.prisma.productImage.findUnique({ where: { id } });
+    if (!image) throw new NotFoundException('תמונה לא נמצאה');
+    return this.prisma.productImage.update({
+      where: { id },
+      data: { active: !image.active },
+    });
+  }
+
+  async deleteProductImage(id: string) {
+    return this.prisma.productImage.delete({ where: { id } });
   }
 }

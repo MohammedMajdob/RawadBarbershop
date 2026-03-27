@@ -41,6 +41,16 @@ export async function getPublicHeroImages() {
   return fetchApi('/availability/hero');
 }
 
+// Public site settings (header, logo)
+export async function getSiteSettings() {
+  return fetchApi('/availability/site-settings');
+}
+
+// Public product images
+export async function getPublicProductImages() {
+  return fetchApi('/availability/products');
+}
+
 // Slot hold
 export async function holdSlot(data: { date: string; time: string }) {
   return fetchApi('/booking/hold', {
@@ -233,6 +243,32 @@ export async function updateAdminSettings(
 }
 
 // Upload
+export async function uploadVideo(token: string, file: File): Promise<{ url: string }> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/upload/video`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+  } catch {
+    throw new Error('שגיאת רשת - נסה שוב');
+  }
+
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error(`שגיאת שרת (${res.status})`);
+  }
+
+  if (!res.ok) throw new Error(data.message || 'שגיאה בהעלאת וידאו');
+  return data;
+}
+
 export async function uploadImage(token: string, file: File): Promise<{ url: string }> {
   const formData = new FormData();
   formData.append('file', file);
@@ -292,6 +328,36 @@ export async function reorderHeroImages(token: string, ids: string[]) {
 
 export async function deleteHeroImage(token: string, id: string) {
   return fetchApi(`/admin/hero/${id}`, {
+    method: 'DELETE',
+    headers: authHeaders(token),
+  });
+}
+
+// Product Images
+export async function getProductImages(token: string, includeAll = false) {
+  const query = includeAll ? '?all=true' : '';
+  return fetchApi(`/admin/products${query}`, {
+    headers: authHeaders(token),
+  });
+}
+
+export async function addProductImage(token: string, url: string, title?: string) {
+  return fetchApi('/admin/products', {
+    method: 'POST',
+    headers: authHeaders(token),
+    body: JSON.stringify({ url, title }),
+  });
+}
+
+export async function toggleProductImage(token: string, id: string) {
+  return fetchApi(`/admin/products/${id}/toggle`, {
+    method: 'PATCH',
+    headers: authHeaders(token),
+  });
+}
+
+export async function deleteProductImage(token: string, id: string) {
+  return fetchApi(`/admin/products/${id}`, {
     method: 'DELETE',
     headers: authHeaders(token),
   });

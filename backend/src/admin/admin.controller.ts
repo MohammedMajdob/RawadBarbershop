@@ -32,7 +32,9 @@ export class AdminController {
   }
 
   @Post('bookings/manual')
-  createManualBooking(@Body() body: { date: string; time: string; name: string; phone: string }) {
+  createManualBooking(
+    @Body() body: { date: string; time: string; name: string; phone: string },
+  ) {
     return this.adminService.createManualBooking(body);
   }
 
@@ -83,5 +85,27 @@ export class AdminController {
   @Delete('hero/:id')
   deleteHeroImage(@Param('id') id: string) {
     return this.adminService.deleteHeroImage(id);
+  }
+
+  // ── Product Images ─────────────────────────────────────
+
+  @Get('products')
+  getProductImages(@Query('all') all?: string) {
+    return this.adminService.getProductImages(all === 'true');
+  }
+
+  @Post('products')
+  addProductImage(@Body() body: { url: string; title?: string }) {
+    return this.adminService.addProductImage(body.url, body.title);
+  }
+
+  @Patch('products/:id/toggle')
+  toggleProductImage(@Param('id') id: string) {
+    return this.adminService.toggleProductImage(id);
+  }
+
+  @Delete('products/:id')
+  deleteProductImage(@Param('id') id: string) {
+    return this.adminService.deleteProductImage(id);
   }
 }

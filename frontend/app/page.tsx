@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Logo from '@/components/ui/Logo';
 import HeroSlider from '@/components/ui/HeroSlider';
+import ProductsRow from '@/components/ui/ProductsRow';
 import Stepper from '@/components/ui/Stepper';
 import BottomNav from '@/components/ui/BottomNav';
 import DatePicker from '@/components/booking/DatePicker';
@@ -24,7 +25,7 @@ import {
   releaseHold,
   renewHold,
 } from '@/lib/api';
-import { useHeroImages } from '@/lib/hooks';
+import { useHeroImages, useSiteSettings, useProductImages } from '@/lib/hooks';
 
 interface CustomerProfile {
   id: string;
@@ -59,6 +60,13 @@ export default function Home() {
   // Hero images from DB (SWR cached)
   const { data: heroData, isLoading: heroLoading } = useHeroImages();
   const heroImages = Array.isArray(heroData) ? heroData : [];
+
+  // Site settings: header media, logo, business info
+  const { data: siteSettings } = useSiteSettings();
+
+  // Product images for bottom row
+  const { data: productData } = useProductImages();
+  const productImages = Array.isArray(productData) ? productData : [];
 
   // Tab navigation - always visible
   const [activeTab, setActiveTab] = useState<ActiveTab>('booking');
@@ -482,9 +490,18 @@ export default function Home() {
 
   // ─── Main Layout - always has bottom nav ─────────────────────
 
+  const showProductsRow = activeTab === 'booking' && productImages.length > 0;
+
   return (
     <main className="flex-1 flex flex-col min-h-screen">
-      <Logo />
+      <Logo
+        headerType={siteSettings?.headerType}
+        headerMediaUrl={siteSettings?.headerMediaUrl}
+        logoUrl={siteSettings?.logoUrl}
+        businessName={siteSettings?.businessName}
+        phone={siteSettings?.phone}
+        price={siteSettings?.price}
+      />
 
       {/* Toast notification */}
       {toast && (
@@ -511,7 +528,7 @@ export default function Home() {
         </div>
       )}
 
-      <div className="flex-1 flex flex-col pb-[70px]">
+      <div className={`flex-1 flex flex-col ${showProductsRow ? 'pb-[178px]' : 'pb-[70px]'}`}>
         {/* ── Booking Tab ─────────────────────────────────────── */}
         {activeTab === 'booking' && renderBookingFlow()}
 
@@ -555,6 +572,13 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {/* Products row - fixed above bottom nav, only on booking tab */}
+      {showProductsRow && (
+        <div className="fixed bottom-[70px] left-0 right-0 z-40 bg-white border-t border-gray-100 shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
+          <ProductsRow images={productImages} />
+        </div>
+      )}
 
       {/* Bottom Navigation - ALWAYS visible */}
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
