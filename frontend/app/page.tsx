@@ -488,7 +488,7 @@ export default function Home() {
 
       {/* Products row - below step buttons */}
       {productImages.length > 0 && (
-        <div className="bg-white border-t border-gray-100">
+        <div>
           <div className="max-w-3xl mx-auto">
             <ProductsRow images={productImages} />
           </div>
