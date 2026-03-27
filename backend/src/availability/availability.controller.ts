@@ -21,7 +21,7 @@ export class AvailabilityController {
   }
 
   @Get('hero')
-  @Header('Cache-Control', 'public, max-age=300, s-maxage=300')
+  @Header('Cache-Control', 'public, max-age=30, s-maxage=30')
   getPublicHeroImages() {
     return this.prisma.heroImage.findMany({
       where: { active: true },
