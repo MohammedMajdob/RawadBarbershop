@@ -14,14 +14,18 @@ export default function ProductsRow({ images }: ProductsRowProps) {
   if (images.length === 0) return null;
 
   return (
-    <div className="py-2 px-3">
+    <div className="px-4 py-4">
+      <h3 className="text-base font-bold text-gray-900 text-right mb-3">המוצרים שלנו</h3>
       <div
-        className="flex gap-3 overflow-x-auto"
+        className="flex gap-3 overflow-x-auto pb-2"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {images.map((img) => (
-          <div key={img.id} className="flex-shrink-0 flex flex-col items-center gap-1">
-            <div className="w-[68px] h-[68px] rounded-xl overflow-hidden bg-gray-100">
+          <div
+            key={img.id}
+            className="flex-shrink-0 w-[140px] bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+          >
+            <div className="w-full h-[130px] bg-gray-50">
               <img
                 src={img.url}
                 alt={img.title || ''}
@@ -30,9 +34,11 @@ export default function ProductsRow({ images }: ProductsRowProps) {
               />
             </div>
             {img.title && (
-              <p className="text-[10px] text-center text-gray-600 truncate w-[68px] font-medium leading-tight">
-                {img.title}
-              </p>
+              <div className="px-2.5 py-2">
+                <p className="text-sm font-semibold text-gray-800 text-right leading-tight line-clamp-2">
+                  {img.title}
+                </p>
+              </div>
             )}
           </div>
         ))}

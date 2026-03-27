@@ -485,12 +485,19 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* Products row - below step buttons */}
+      {productImages.length > 0 && (
+        <div className="bg-white border-t border-gray-100">
+          <div className="max-w-3xl mx-auto">
+            <ProductsRow images={productImages} />
+          </div>
+        </div>
+      )}
     </>
   );
 
   // ─── Main Layout - always has bottom nav ─────────────────────
-
-  const showProductsRow = activeTab === 'booking' && productImages.length > 0;
 
   return (
     <main className="flex-1 flex flex-col min-h-screen">
@@ -528,7 +535,7 @@ export default function Home() {
         </div>
       )}
 
-      <div className={`flex-1 flex flex-col ${showProductsRow ? 'pb-[178px]' : 'pb-[70px]'}`}>
+      <div className="flex-1 flex flex-col pb-[70px]">
         {/* ── Booking Tab ─────────────────────────────────────── */}
         {activeTab === 'booking' && renderBookingFlow()}
 
@@ -573,12 +580,6 @@ export default function Home() {
         )}
       </div>
 
-      {/* Products row - fixed above bottom nav, only on booking tab */}
-      {showProductsRow && (
-        <div className="fixed bottom-[70px] left-0 right-0 z-40 bg-white border-t border-gray-100 shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
-          <ProductsRow images={productImages} />
-        </div>
-      )}
 
       {/* Bottom Navigation - ALWAYS visible */}
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
