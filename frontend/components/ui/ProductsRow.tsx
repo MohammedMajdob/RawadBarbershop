@@ -1,5 +1,11 @@
 'use client';
 
+function fixCloudinaryUrl(url: string): string {
+  if (!url.includes('cloudinary.com')) return url;
+  // Override any existing transformation to show full image with white bg
+  return url.replace('/upload/', '/upload/c_pad,b_white,w_500,h_500,q_auto,f_webp/');
+}
+
 interface ProductImage {
   id: string;
   url: string;
@@ -27,7 +33,7 @@ export default function ProductsRow({ images }: ProductsRowProps) {
           >
             <div className="w-[110px] h-[110px] bg-white flex items-center justify-center p-2">
               <img
-                src={img.url}
+                src={fixCloudinaryUrl(img.url)}
                 alt={img.title || ''}
                 className="w-full h-full object-contain"
                 loading="lazy"
