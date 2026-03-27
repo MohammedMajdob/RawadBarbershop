@@ -21,7 +21,7 @@ export class AvailabilityController {
   }
 
   @Get('hero')
-  @Header('Cache-Control', 'public, max-age=30, s-maxage=30')
+  @Header('Cache-Control', 'no-store')
   getPublicHeroImages() {
     return this.prisma.heroImage.findMany({
       where: { active: true },
@@ -31,7 +31,7 @@ export class AvailabilityController {
   }
 
   @Get('site-settings')
-  @Header('Cache-Control', 'public, max-age=60, s-maxage=60')
+  @Header('Cache-Control', 'no-store')
   async getSiteSettings() {
     const settings = await this.prisma.settings.findUnique({
       where: { id: 'default' },
@@ -57,7 +57,7 @@ export class AvailabilityController {
   }
 
   @Get('products')
-  @Header('Cache-Control', 'public, max-age=60, s-maxage=60')
+  @Header('Cache-Control', 'no-store')
   getPublicProductImages() {
     return this.prisma.productImage.findMany({
       where: { active: true },
