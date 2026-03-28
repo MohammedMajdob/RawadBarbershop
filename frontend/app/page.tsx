@@ -513,7 +513,6 @@ export default function Home() {
         logoUrl={siteSettings?.logoUrl}
         businessName={siteSettings?.businessName}
         phone={siteSettings?.phone}
-        price={siteSettings?.price}
       />
 
       {/* Toast notification */}
@@ -688,10 +687,6 @@ function QuickConfirmStep({ name, phone, date, time, loading, onConfirm, isResch
         <h3 className="font-bold text-foreground text-right mb-4">סיכום הזמנה</h3>
         <div className="space-y-3">
           <div className="flex justify-between items-center">
-            <span className="text-muted text-sm">שירות</span>
-            <span className="font-semibold text-foreground">תספורת</span>
-          </div>
-          <div className="flex justify-between items-center">
             <span className="text-muted text-sm">תאריך</span>
             <span className="font-semibold text-foreground">
               יום {dayName}, {d.getDate().toString().padStart(2, '0')}/{(d.getMonth() + 1).toString().padStart(2, '0')}/{d.getFullYear()}
@@ -700,11 +695,6 @@ function QuickConfirmStep({ name, phone, date, time, loading, onConfirm, isResch
           <div className="flex justify-between items-center">
             <span className="text-muted text-sm">שעה</span>
             <span className="font-semibold text-foreground">{time}</span>
-          </div>
-          <div className="border-t border-border my-2" />
-          <div className="flex justify-between items-center">
-            <span className="text-muted text-sm font-semibold">מחיר</span>
-            <span className="font-black text-primary text-lg">₪70</span>
           </div>
         </div>
       </div>

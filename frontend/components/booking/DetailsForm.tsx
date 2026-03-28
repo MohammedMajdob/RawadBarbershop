@@ -9,7 +9,6 @@ interface DetailsFormProps {
   loading?: boolean;
 }
 
-const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 
 export default function DetailsForm({ date, time, onSubmit, loading }: DetailsFormProps) {
   const [name, setName] = useState('');
@@ -19,7 +18,6 @@ export default function DetailsForm({ date, time, onSubmit, loading }: DetailsFo
   // Parse as local date to avoid timezone shift
   const [yr, mo, dy] = date.split('-').map(Number);
   const d = new Date(yr, mo - 1, dy);
-  const dayName = dayNames[d.getDay()];
 
   const validate = () => {
     const newErrors: typeof errors = {};
@@ -79,10 +77,6 @@ export default function DetailsForm({ date, time, onSubmit, loading }: DetailsFo
           <h3 className="font-bold text-foreground text-right mb-4">סיכום הזמנה</h3>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-muted text-sm">שירות</span>
-              <span className="font-semibold text-foreground">תספורת</span>
-            </div>
-            <div className="flex justify-between items-center">
               <span className="text-muted text-sm">תאריך</span>
               <span className="font-semibold text-foreground">
                 {d.getDate().toString().padStart(2, '0')}/{(d.getMonth() + 1).toString().padStart(2, '0')}/{d.getFullYear()}
@@ -91,11 +85,6 @@ export default function DetailsForm({ date, time, onSubmit, loading }: DetailsFo
             <div className="flex justify-between items-center">
               <span className="text-muted text-sm">שעה</span>
               <span className="font-semibold text-foreground">{time}</span>
-            </div>
-            <div className="border-t border-border my-2" />
-            <div className="flex justify-between items-center">
-              <span className="text-muted text-sm font-semibold">מחיר</span>
-              <span className="font-black text-primary text-lg">₪70</span>
             </div>
           </div>
         </div>

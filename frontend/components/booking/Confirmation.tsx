@@ -38,10 +38,6 @@ export default function Confirmation({ booking, onNewBooking }: ConfirmationProp
             <span className="font-bold text-foreground">{booking.name}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-muted text-sm">שירות</span>
-            <span className="font-semibold text-foreground">תספורת</span>
-          </div>
-          <div className="flex justify-between items-center">
             <span className="text-muted text-sm">תאריך</span>
             <span className="font-semibold text-foreground">
               {day.toString().padStart(2, '0')}/{month.toString().padStart(2, '0')}/{year}
@@ -50,11 +46,6 @@ export default function Confirmation({ booking, onNewBooking }: ConfirmationProp
           <div className="flex justify-between items-center">
             <span className="text-muted text-sm">שעה</span>
             <span className="font-semibold text-foreground">{booking.time}</span>
-          </div>
-          <div className="border-t border-border my-2" />
-          <div className="flex justify-between items-center">
-            <span className="text-muted font-semibold text-sm">מחיר</span>
-            <span className="font-black text-primary text-lg">₪70</span>
           </div>
         </div>
       </div>
