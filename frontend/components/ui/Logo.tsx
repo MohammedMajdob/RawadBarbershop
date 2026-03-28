@@ -52,7 +52,7 @@ export default function Logo({
                 <img
                   src={logoUrl}
                   alt={businessName}
-                  className="object-contain w-full h-full"
+                  className="object-cover w-full h-full"
                   loading="eager"
                 />
               </div>

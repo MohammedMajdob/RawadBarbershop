@@ -89,6 +89,12 @@ export default function DetailsForm({ date, time, onSubmit, loading }: DetailsFo
           </div>
         </div>
 
+        {/* Payment note */}
+        <div className="flex items-center justify-center gap-2 text-sm text-muted bg-gray-50 rounded-xl px-4 py-2.5">
+          <span>💳</span>
+          <span>ניתן לשלם במזומן או Bit — ישירות במספרה</span>
+        </div>
+
         {/* Submit */}
         <button
           type="submit"
