@@ -19,6 +19,8 @@ import {
   uploadImage,
   uploadVideo,
   uploadSmallImage,
+  getAdminWaitlist,
+  removeFromWaitlist,
   getProductImages,
   addProductImage,
   toggleProductImage,
@@ -76,6 +78,15 @@ interface HeroImage {
   active: boolean;
 }
 
+interface WaitlistEntry {
+  id: string;
+  name: string;
+  phone: string;
+  preferredDate: string | null;
+  note: string | null;
+  createdAt: string;
+}
+
 interface ProductImage {
   id: string;
   url: string;
@@ -90,7 +101,7 @@ export default function AdminPage() {
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
-  const [activeTab, setActiveTab] = useState<'bookings' | 'settings' | 'hero'>('bookings');
+  const [activeTab, setActiveTab] = useState<'bookings' | 'settings' | 'hero' | 'waitlist'>('bookings');
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [heroImages, setHeroImages] = useState<HeroImage[]>([]);
@@ -107,6 +118,7 @@ export default function AdminPage() {
   const [manualPhone, setManualPhone] = useState('');
   const [manualLoading, setManualLoading] = useState(false);
   const [manualHoldId, setManualHoldId] = useState<string | null>(null);
+  const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
   const manualHoldStartRef = useRef<number>(0);
   const [newHeroFile, setNewHeroFile] = useState<File | null>(null);
   const [newHeroTitle, setNewHeroTitle] = useState('');
@@ -176,14 +188,33 @@ export default function AdminPage() {
     }
   }, [token]);
 
+  const loadWaitlist = useCallback(async () => {
+    try {
+      const data = await getAdminWaitlist(token);
+      setWaitlist(data);
+    } catch (e) {
+      console.error(e);
+    }
+  }, [token]);
+
   useEffect(() => {
     if (token) {
       loadBookings();
       loadSettings();
       loadHeroImages();
       loadProductImages();
+      loadWaitlist();
     }
-  }, [token, loadBookings, loadSettings, loadHeroImages, loadProductImages]);
+  }, [token, loadBookings, loadSettings, loadHeroImages, loadProductImages, loadWaitlist]);
+
+  const handleRemoveWaitlist = async (id: string) => {
+    try {
+      await removeFromWaitlist(token, id);
+      loadWaitlist();
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const handleConfirmAction = async () => {
     if (!confirmPopup) return;
@@ -580,7 +611,7 @@ export default function AdminPage() {
       {/* Tabs */}
       <div className="max-w-5xl mx-auto px-4 mt-6">
         <div className="flex gap-1 p-1 bg-gray-100 rounded-xl w-fit mb-6 overflow-x-auto">
-          {(['bookings', 'settings', 'hero'] as const).map((tab) => (
+          {(['bookings', 'waitlist', 'settings', 'hero'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -590,7 +621,7 @@ export default function AdminPage() {
                   : 'text-muted hover:text-foreground'
               }`}
             >
-              {tab === 'bookings' ? 'תורים' : tab === 'settings' ? 'הגדרות' : 'תמונות'}
+              {tab === 'bookings' ? 'תורים' : tab === 'waitlist' ? `המתנה ${waitlist.length > 0 ? `(${waitlist.length})` : ''}` : tab === 'settings' ? 'הגדרות' : 'תמונות'}
             </button>
           ))}
         </div>
@@ -838,6 +869,49 @@ export default function AdminPage() {
                       {manualLoading ? 'יוצר...' : 'צור תור'}
                     </button>
                   </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Waitlist Tab ── */}
+        {activeTab === 'waitlist' && (
+          <div className="space-y-4 animate-fadeInUp pb-8">
+            <div className="bg-card rounded-2xl p-5 border border-border">
+              <h3 className="font-bold text-foreground mb-1">רשימת המתנה</h3>
+              <p className="text-xs text-muted mb-4">לקוחות שביקשו להודיע להם כשיתפנה תור</p>
+              {waitlist.length === 0 ? (
+                <p className="text-muted text-sm text-center py-6">אין רשומות</p>
+              ) : (
+                <div className="space-y-3">
+                  {waitlist.map((entry) => (
+                    <div key={entry.id} className="flex items-start gap-3 p-4 rounded-xl border border-border bg-white">
+                      <div className="flex-1 min-w-0 text-right">
+                        <div className="flex items-center justify-end gap-2 mb-1">
+                          <span className="font-bold text-foreground text-sm">{entry.name}</span>
+                        </div>
+                        <p className="text-sm text-primary font-semibold" dir="ltr">{entry.phone}</p>
+                        {entry.preferredDate && (
+                          <p className="text-xs text-muted mt-1">
+                            יום מועדף: {new Date(entry.preferredDate + 'T00:00:00').toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long' })}
+                          </p>
+                        )}
+                        {entry.note && (
+                          <p className="text-xs text-gray-600 mt-1 bg-gray-50 rounded-lg px-2 py-1">{entry.note}</p>
+                        )}
+                        <p className="text-[10px] text-muted mt-1.5">
+                          {new Date(entry.createdAt).toLocaleDateString('he-IL', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleRemoveWaitlist(entry.id)}
+                        className="flex-shrink-0 text-xs bg-red-50 text-red-500 px-3 py-1.5 rounded-lg font-bold hover:bg-red-100 transition-colors"
+                      >
+                        הסר
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

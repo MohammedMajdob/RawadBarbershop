@@ -14,6 +14,7 @@ import Confirmation from '@/components/booking/Confirmation';
 import MyBookings from '@/components/booking/MyBookings';
 import ProfilePage from '@/components/booking/ProfilePage';
 import LoginPrompt from '@/components/booking/LoginPrompt';
+import WaitlistModal from '@/components/booking/WaitlistModal';
 import { mutate } from 'swr';
 import {
   startBooking,
@@ -68,6 +69,9 @@ export default function Home() {
   // Product images for bottom row
   const { data: productData } = useProductImages();
   const productImages = Array.isArray(productData) ? productData : [];
+
+  // Waitlist
+  const [showWaitlist, setShowWaitlist] = useState(false);
 
   // Tab navigation - always visible
   const [activeTab, setActiveTab] = useState<ActiveTab>('booking');
@@ -380,20 +384,44 @@ export default function Home() {
       {/* Content */}
       <div className="flex-1 max-w-3xl w-full mx-auto px-4 py-8">
         {step === 0 && (
-          <DatePicker
-            onSelect={handleDateSelect}
-            selectedDate={selectedDate}
-            title={rescheduleId ? 'בחר תאריך חדש' : undefined}
-          />
+          <>
+            <DatePicker
+              onSelect={handleDateSelect}
+              selectedDate={selectedDate}
+              title={rescheduleId ? 'בחר תאריך חדש' : undefined}
+            />
+            {!rescheduleId && (
+              <div className="mt-4 text-center">
+                <button
+                  onClick={() => setShowWaitlist(true)}
+                  className="text-sm text-muted hover:text-primary transition-colors underline underline-offset-2"
+                >
+                  לא מצאת תור מתאים? הצטרף לרשימת המתנה
+                </button>
+              </div>
+            )}
+          </>
         )}
 
         {step === 1 && (
-          <TimePicker
-            date={selectedDate}
-            onSelect={handleTimeSelect}
-            selectedTime={selectedTime}
-            title={rescheduleId ? 'בחר שעה חדשה' : undefined}
-          />
+          <>
+            <TimePicker
+              date={selectedDate}
+              onSelect={handleTimeSelect}
+              selectedTime={selectedTime}
+              title={rescheduleId ? 'בחר שעה חדשה' : undefined}
+            />
+            {!rescheduleId && (
+              <div className="mt-3 text-center">
+                <button
+                  onClick={() => setShowWaitlist(true)}
+                  className="text-sm text-muted hover:text-primary transition-colors underline underline-offset-2"
+                >
+                  לא מצאת שעה מתאימה? הצטרף לרשימת המתנה
+                </button>
+              </div>
+            )}
+          </>
         )}
 
         {step === 2 && isAuthenticated ? (
@@ -588,6 +616,16 @@ export default function Home() {
 
       {/* Bottom Navigation - ALWAYS visible */}
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+
+      {/* Waitlist Modal */}
+      {showWaitlist && (
+        <WaitlistModal
+          onClose={() => setShowWaitlist(false)}
+          prefillName={profile?.name || ''}
+          prefillPhone={profile?.phone || ''}
+          prefillDate={selectedDate}
+        />
+      )}
     </main>
   );
 }

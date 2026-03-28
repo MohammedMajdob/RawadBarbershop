@@ -286,4 +286,16 @@ export class AdminService {
   async deleteProductImage(id: string) {
     return this.prisma.productImage.delete({ where: { id } });
   }
+
+  // ── Waitlist ───────────────────────────────────────────
+
+  async getWaitlist() {
+    return this.prisma.waitlistEntry.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async removeFromWaitlist(id: string) {
+    return this.prisma.waitlistEntry.delete({ where: { id } });
+  }
 }

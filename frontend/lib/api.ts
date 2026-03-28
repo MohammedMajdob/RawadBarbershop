@@ -52,6 +52,25 @@ export async function getPublicProductImages() {
 }
 
 // Slot hold
+// Waitlist
+export async function joinWaitlist(data: { name: string; phone: string; preferredDate?: string; note?: string }) {
+  return fetchApi('/availability/waitlist', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getAdminWaitlist(token: string) {
+  return fetchApi('/admin/waitlist', { headers: { Authorization: `Bearer ${token}` } });
+}
+
+export async function removeFromWaitlist(token: string, id: string) {
+  return fetchApi(`/admin/waitlist/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
 export async function cancelPendingBooking(bookingId: string) {
   return fetchApi(`/booking/${bookingId}/cancel-pending`, { method: 'DELETE' });
 }

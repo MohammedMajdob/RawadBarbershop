@@ -108,4 +108,16 @@ export class AdminController {
   deleteProductImage(@Param('id') id: string) {
     return this.adminService.deleteProductImage(id);
   }
+
+  // ── Waitlist ──────────────────────────────────────────
+
+  @Get('waitlist')
+  getWaitlist() {
+    return this.adminService.getWaitlist();
+  }
+
+  @Delete('waitlist/:id')
+  removeFromWaitlist(@Param('id') id: string) {
+    return this.adminService.removeFromWaitlist(id);
+  }
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Header } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Query, Header, Body, Param } from '@nestjs/common';
 import { AvailabilityService } from './availability.service';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -63,6 +63,20 @@ export class AvailabilityController {
       where: { active: true },
       orderBy: { order: 'asc' },
       select: { id: true, url: true, title: true },
+    });
+  }
+
+  @Post('waitlist')
+  joinWaitlist(
+    @Body() body: { name: string; phone: string; preferredDate?: string; note?: string },
+  ) {
+    return this.prisma.waitlistEntry.create({
+      data: {
+        name: body.name,
+        phone: body.phone,
+        preferredDate: body.preferredDate || null,
+        note: body.note || null,
+      },
     });
   }
 }

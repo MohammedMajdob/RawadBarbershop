@@ -88,3 +88,12 @@ model ProductImage {
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
 }
+
+model WaitlistEntry {
+  id            String   @id @default(uuid())
+  name          String
+  phone         String
+  preferredDate String?  // YYYY-MM-DD, optional
+  note          String?
+  createdAt     DateTime @default(now())
+}
