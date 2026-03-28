@@ -167,6 +167,7 @@ export default function Home() {
   // Flow for NEW customers (OTP via booking)
   const handleDetailsSubmit = async (name: string, phone: string) => {
     setLoading(true);
+    setHoldId(null); // stop heartbeat immediately before booking call
     setCustomerName(name);
     try {
       const result = await startBooking({
@@ -176,7 +177,6 @@ export default function Home() {
         time: selectedTime,
       });
       setBookingId(result.bookingId);
-      setHoldId(null); // hold is consumed by the booking
       setStep(3);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'שגיאה ביצירת ההזמנה';
@@ -216,6 +216,7 @@ export default function Home() {
   const handleQuickBook = async () => {
     if (!token) return;
     setLoading(true);
+    setHoldId(null); // stop heartbeat immediately before booking call
     try {
       if (rescheduleId) {
         await rescheduleMyBooking(token, rescheduleId, {
@@ -412,7 +413,7 @@ export default function Home() {
 
         {step === 3 && (
           <>
-            {holdExpiresAt && <HoldCountdownBanner expiresAt={holdExpiresAt} onExpired={resetBooking} />}
+            {holdExpiresAt && <HoldCountdownBanner expiresAt={holdExpiresAt} onExpired={() => setHoldExpiresAt(null)} />}
             <OtpVerify
               onVerify={handleOtpVerify}
               loading={loading}
