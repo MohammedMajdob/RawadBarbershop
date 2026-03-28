@@ -30,7 +30,9 @@ export default function WaitlistModal({ onClose, prefillName = '', prefillPhone 
   const [error, setError] = useState('');
 
   const { data: datesData } = useAvailableDates();
-  const availableDates: string[] = Array.isArray(datesData) ? datesData : (datesData?.dates ?? []);
+  const availableDates: string[] = (datesData?.dates ?? [])
+    .filter((d: { date: string; available: boolean }) => d.available)
+    .map((d: { date: string; available: boolean }) => d.date);
 
   const handleSubmit = async () => {
     if (!name.trim() || !phone.trim()) {
