@@ -621,6 +621,7 @@ export default function Home() {
       {showWaitlist && (
         <WaitlistModal
           onClose={() => setShowWaitlist(false)}
+          isAuthenticated={isAuthenticated}
           prefillName={profile?.name || ''}
           prefillPhone={profile?.phone || ''}
           prefillDate={selectedDate}

@@ -27,13 +27,6 @@ export default function DatePicker({ onSelect, selectedDate, title }: DatePicker
     );
   }, [data]);
 
-  // Days in booking window but not available (closed or fully booked)
-  const closedDates = useMemo(() => {
-    if (!data?.dates) return new Set<string>();
-    return new Set<string>(
-      data.dates.filter((d: { available: boolean }) => !d.available).map((d: { date: string }) => d.date)
-    );
-  }, [data]);
 
   const today = useMemo(() => {
     const d = new Date();
@@ -126,7 +119,6 @@ export default function DatePicker({ onSelect, selectedDate, title }: DatePicker
 
             const dateStr = formatDate(day);
             const available = availableDates.has(dateStr);
-            const closed = closedDates.has(dateStr);
             const selected = selectedDate === dateStr;
             const past = isPast(day);
             const todayMark = isToday(day);
@@ -143,16 +135,11 @@ export default function DatePicker({ onSelect, selectedDate, title }: DatePicker
                       ? 'bg-primary text-white shadow-md shadow-primary/30 scale-105'
                       : available && !past
                         ? 'bg-gray-50 text-foreground hover:bg-primary/10 hover:text-primary cursor-pointer'
-                        : closed && !past
-                          ? 'bg-red-50/60 text-red-300 cursor-not-allowed'
-                          : 'text-gray-200 cursor-not-allowed'
+                        : 'text-gray-200 cursor-not-allowed'
                   }
                 `}
               >
                 {day.getDate()}
-                {closed && !past && !selected && (
-                  <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-red-300" />
-                )}
                 {todayMark && (
                   <div className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full ${selected ? 'bg-white' : 'bg-primary'}`} />
                 )}
