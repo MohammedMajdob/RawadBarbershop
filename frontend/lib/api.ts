@@ -52,6 +52,10 @@ export async function getPublicProductImages() {
 }
 
 // Slot hold
+export async function cancelPendingBooking(bookingId: string) {
+  return fetchApi(`/booking/${bookingId}/cancel-pending`, { method: 'DELETE' });
+}
+
 export async function holdSlot(data: { date: string; time: string }) {
   return fetchApi('/booking/hold', {
     method: 'POST',

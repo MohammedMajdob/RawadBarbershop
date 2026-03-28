@@ -444,4 +444,17 @@ export class BookingService {
       },
     };
   }
+
+  // ─── Cancel unverified pending booking (user went back from OTP) ─
+
+  async cancelPendingBooking(bookingId: string) {
+    await this.prisma.booking.deleteMany({
+      where: {
+        id: bookingId,
+        status: 'PENDING',
+        otpCode: { not: null }, // only unverified bookings (not holds)
+      },
+    });
+    return { ok: true };
+  }
 }

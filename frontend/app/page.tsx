@@ -24,6 +24,7 @@ import {
   holdSlot,
   releaseHold,
   renewHold,
+  cancelPendingBooking,
 } from '@/lib/api';
 import { useHeroImages, useSiteSettings, useProductImages } from '@/lib/hooks';
 
@@ -322,7 +323,15 @@ export default function Home() {
   const goBack = async () => {
     if (step === 2) {
       await doReleaseHold();
-      setSelectedTime(''); // Clear time so user picks fresh
+      setSelectedTime('');
+    }
+    if (step === 3 && bookingId) {
+      // Cancel the pending booking so the slot is freed immediately
+      cancelPendingBooking(bookingId).catch(() => {});
+      setBookingId('');
+      setHoldExpiresAt(null);
+      setStep(1); // Go back to time selection
+      return;
     }
     if (step > 0 && step < 4) setStep(step - 1);
   };

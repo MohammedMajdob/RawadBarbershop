@@ -45,6 +45,11 @@ export class BookingController {
     return this.bookingService.startBooking(dto);
   }
 
+  @Delete(':id/cancel-pending')
+  cancelPendingBooking(@Param('id') id: string) {
+    return this.bookingService.cancelPendingBooking(id);
+  }
+
   @Post('verify')
   verify(@Body() dto: VerifyBookingDto) {
     return this.bookingService.verifyBooking(dto);
