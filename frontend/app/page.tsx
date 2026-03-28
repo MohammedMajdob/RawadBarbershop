@@ -411,11 +411,14 @@ export default function Home() {
         ) : null}
 
         {step === 3 && (
-          <OtpVerify
-            onVerify={handleOtpVerify}
-            loading={loading}
-            error={otpError}
-          />
+          <>
+            {holdExpiresAt && <HoldCountdownBanner expiresAt={holdExpiresAt} onExpired={resetBooking} />}
+            <OtpVerify
+              onVerify={handleOtpVerify}
+              loading={loading}
+              error={otpError}
+            />
+          </>
         )}
 
         {step === 4 && (
