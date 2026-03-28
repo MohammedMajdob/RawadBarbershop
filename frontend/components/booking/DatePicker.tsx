@@ -140,6 +140,9 @@ export default function DatePicker({ onSelect, selectedDate, title }: DatePicker
                 `}
               >
                 {day.getDate()}
+                {available && !past && !selected && !todayMark && (
+                  <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-green-400" />
+                )}
                 {todayMark && (
                   <div className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full ${selected ? 'bg-white' : 'bg-primary'}`} />
                 )}

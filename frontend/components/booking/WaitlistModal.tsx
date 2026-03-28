@@ -80,7 +80,16 @@ export default function WaitlistModal({
         className="relative w-full max-w-lg bg-white rounded-t-3xl p-6 pb-10 shadow-2xl animate-slideUp"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5" />
+        {/* Handle + close button */}
+        <div className="flex items-center justify-between mb-5">
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
+            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <div className="w-10 h-1 bg-gray-200 rounded-full" />
+          <div className="w-8" />
+        </div>
 
         {done ? (
           <div className="text-center py-2">
@@ -93,12 +102,12 @@ export default function WaitlistModal({
             <p className="text-sm text-gray-500 mb-5">ניצור איתך קשר כשיתפנה תור</p>
 
             {/* Share section */}
-            <div className="bg-gray-50 rounded-2xl p-4 mb-4 text-right">
-              <p className="text-sm font-bold text-gray-800 mb-1">שתף חברים</p>
-              <p className="text-xs text-gray-500 mb-3">שתף את הקישור לקביעת תור עם חברים</p>
+            <div className="bg-[#1a1a2e] rounded-2xl p-4 mb-4 text-right">
+              <p className="text-sm font-bold text-white mb-0.5">שתף עם חברים</p>
+              <p className="text-xs text-white/60 mb-3">שלח את הקישור לקביעת תור</p>
               <button
                 onClick={handleShare}
-                className="w-full flex items-center justify-center gap-2 py-2.5 bg-white border-2 border-gray-200 rounded-xl text-sm font-bold text-gray-700 hover:border-primary hover:text-primary transition-colors"
+                className="w-full flex items-center justify-center gap-2 py-2.5 bg-white/10 border border-white/20 rounded-xl text-sm font-bold text-white hover:bg-white/20 transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
