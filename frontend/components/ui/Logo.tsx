@@ -28,22 +28,27 @@ export default function Logo({
               loop
               playsInline
               preload="auto"
+              controls={false}
               className="w-full h-full object-cover"
-              onCanPlay={(e) => {
-                const v = e.currentTarget;
-                v.play().catch(() => {});
-              }}
               ref={(el) => {
                 if (el) {
-                  // iOS sometimes blocks autoplay - retry on visibility change
-                  const handleVisibility = () => {
+                  el.muted = true;
+                  el.play().catch(() => {});
+                  // iOS: play on first touch anywhere
+                  const playOnTouch = () => {
+                    el.muted = true;
+                    el.play().catch(() => {});
+                    document.removeEventListener('touchstart', playOnTouch);
+                  };
+                  document.addEventListener('touchstart', playOnTouch, { once: true });
+                  // Resume on tab return
+                  const onVisible = () => {
                     if (document.visibilityState === 'visible') {
+                      el.muted = true;
                       el.play().catch(() => {});
                     }
                   };
-                  document.addEventListener('visibilitychange', handleVisibility);
-                  // Also try playing immediately
-                  el.play().catch(() => {});
+                  document.addEventListener('visibilitychange', onVisible);
                 }
               }}
             />
