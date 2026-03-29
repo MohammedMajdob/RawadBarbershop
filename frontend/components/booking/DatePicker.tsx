@@ -80,7 +80,7 @@ export default function DatePicker({ onSelect, selectedDate, title }: DatePicker
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           {/* RTL: left = next month, right = prev month */}
           <button
-            onClick={nextMonth}
+            onClick={prevMonth}
             className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
           >
             <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -93,7 +93,7 @@ export default function DatePicker({ onSelect, selectedDate, title }: DatePicker
           </h3>
 
           <button
-            onClick={prevMonth}
+            onClick={nextMonth}
             className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
           >
             <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

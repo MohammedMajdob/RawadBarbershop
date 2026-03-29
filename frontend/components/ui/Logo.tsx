@@ -67,14 +67,16 @@ export default function Logo({
         <div className={logoUrl ? 'pl-[104px]' : ''}>
           <h1 className="text-lg font-black text-gray-900">{businessName}</h1>
           <a
-            href="https://ul.waze.com/ul?ll=32.96059007%2C35.16932068&navigate=yes&utm_campaign=share_drive&utm_source=waze_app&utm_medium=lm_share_location"
+            href="https://ul.waze.com/ul?venue_id=23069002.230493408.2038009&overview=yes&utm_campaign=share_drive&utm_source=waze_app&utm_medium=lm_share_location"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 mt-0.5 hover:opacity-70 transition-opacity"
           >
-            <svg className="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2C7.03 2 3 6.03 3 11c0 2.1.72 4.03 1.93 5.57L12 22l7.07-5.43A8.96 8.96 0 0021 11c0-4.97-4.03-9-9-9zm0 4a3.5 3.5 0 110 7 3.5 3.5 0 010-7z" fill="#33CCFF"/>
+              <circle cx="10" cy="9.5" r="1" fill="#333"/>
+              <circle cx="14" cy="9.5" r="1" fill="#333"/>
+              <path d="M9.5 12.5c0 0 1 1.5 2.5 1.5s2.5-1.5 2.5-1.5" stroke="#333" strokeWidth="0.8" strokeLinecap="round" fill="none"/>
             </svg>
             <span className="text-sm text-blue-400 font-medium">כפר אבו סנאן</span>
           </a>
