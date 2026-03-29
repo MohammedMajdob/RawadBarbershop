@@ -29,6 +29,23 @@ export default function Logo({
               playsInline
               preload="auto"
               className="w-full h-full object-cover"
+              onCanPlay={(e) => {
+                const v = e.currentTarget;
+                v.play().catch(() => {});
+              }}
+              ref={(el) => {
+                if (el) {
+                  // iOS sometimes blocks autoplay - retry on visibility change
+                  const handleVisibility = () => {
+                    if (document.visibilityState === 'visible') {
+                      el.play().catch(() => {});
+                    }
+                  };
+                  document.addEventListener('visibilitychange', handleVisibility);
+                  // Also try playing immediately
+                  el.play().catch(() => {});
+                }
+              }}
             />
           ) : headerMediaUrl ? (
             <img
