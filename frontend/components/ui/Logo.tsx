@@ -66,13 +66,18 @@ export default function Logo({
         {/* Name + location next to logo */}
         <div className={logoUrl ? 'pl-[104px]' : ''}>
           <h1 className="text-lg font-black text-gray-900">{businessName}</h1>
-          <div className="flex items-center gap-1.5 mt-0.5">
-            <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <a
+            href="https://ul.waze.com/ul?ll=32.96059007%2C35.16932068&navigate=yes&utm_campaign=share_drive&utm_source=waze_app&utm_medium=lm_share_location"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 mt-0.5 hover:opacity-70 transition-opacity"
+          >
+            <svg className="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-            <span className="text-sm text-gray-500">כפר אבו סנאן</span>
-          </div>
+            <span className="text-sm text-blue-400 font-medium">כפר אבו סנאן</span>
+          </a>
         </div>
 
         {/* Rating + Phone + Price row */}

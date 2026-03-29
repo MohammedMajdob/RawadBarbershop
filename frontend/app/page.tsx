@@ -358,6 +358,13 @@ export default function Home() {
         <HeroSlider images={heroImages} loading={heroLoading} />
       </div>
 
+      {/* Products row - above stepper */}
+      {productImages.length > 0 && (
+        <div className="max-w-3xl mx-auto w-full">
+          <ProductsRow images={productImages} />
+        </div>
+      )}
+
       {/* Stepper */}
       <Stepper currentStep={step} />
 
@@ -391,12 +398,15 @@ export default function Home() {
               title={rescheduleId ? 'בחר תאריך חדש' : undefined}
             />
             {!rescheduleId && (
-              <div className="mt-4 text-center">
+              <div className="mt-4 flex justify-center">
                 <button
                   onClick={() => setShowWaitlist(true)}
-                  className="text-sm text-muted hover:text-primary transition-colors underline underline-offset-2"
+                  className="flex items-center gap-2 text-sm font-semibold text-primary/80 bg-primary/8 hover:bg-primary/15 px-4 py-2.5 rounded-xl border border-primary/20 transition-all"
                 >
-                  לא מצאת תור מתאים? הצטרף לרשימת המתנה
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  לא מצאת תור? הצטרף לרשימת המתנה
                 </button>
               </div>
             )}
@@ -412,12 +422,15 @@ export default function Home() {
               title={rescheduleId ? 'בחר שעה חדשה' : undefined}
             />
             {!rescheduleId && (
-              <div className="mt-3 text-center">
+              <div className="mt-3 flex justify-center">
                 <button
                   onClick={() => setShowWaitlist(true)}
-                  className="text-sm text-muted hover:text-primary transition-colors underline underline-offset-2"
+                  className="flex items-center gap-2 text-sm font-semibold text-primary/80 bg-primary/8 hover:bg-primary/15 px-4 py-2.5 rounded-xl border border-primary/20 transition-all"
                 >
-                  לא מצאת שעה מתאימה? הצטרף לרשימת המתנה
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  לא מצאת שעה? הצטרף לרשימת המתנה
                 </button>
               </div>
             )}
@@ -520,14 +533,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Products row - below step buttons */}
-      {productImages.length > 0 && (
-        <div>
-          <div className="max-w-3xl mx-auto">
-            <ProductsRow images={productImages} />
-          </div>
-        </div>
-      )}
     </>
   );
 

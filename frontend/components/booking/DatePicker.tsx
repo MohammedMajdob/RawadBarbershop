@@ -78,8 +78,9 @@ export default function DatePicker({ onSelect, selectedDate, title }: DatePicker
       <div className="max-w-md mx-auto bg-card rounded-2xl shadow-lg border border-border overflow-hidden">
         {/* Month navigation */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          {/* RTL: left = next month, right = prev month */}
           <button
-            onClick={prevMonth}
+            onClick={nextMonth}
             className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
           >
             <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -92,7 +93,7 @@ export default function DatePicker({ onSelect, selectedDate, title }: DatePicker
           </h3>
 
           <button
-            onClick={nextMonth}
+            onClick={prevMonth}
             className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
           >
             <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -122,6 +123,10 @@ export default function DatePicker({ onSelect, selectedDate, title }: DatePicker
             const selected = selectedDate === dateStr;
             const past = isPast(day);
             const todayMark = isToday(day);
+            // In booking range but not available = closed/non-working day
+            const allDates = data?.dates ?? [];
+            const inRange = allDates.some((d: { date: string }) => d.date === dateStr);
+            const isClosed = inRange && !available && !past;
 
             return (
               <button
@@ -135,7 +140,9 @@ export default function DatePicker({ onSelect, selectedDate, title }: DatePicker
                       ? 'bg-primary text-white shadow-md shadow-primary/30 scale-105'
                       : available && !past
                         ? 'bg-gray-50 text-foreground hover:bg-primary/10 hover:text-primary cursor-pointer'
-                        : 'text-gray-200 cursor-not-allowed'
+                        : isClosed
+                          ? 'text-gray-300 line-through cursor-not-allowed'
+                          : 'text-gray-200 cursor-not-allowed'
                   }
                 `}
               >
