@@ -79,12 +79,13 @@ export default function DatePicker({ onSelect, selectedDate, title }: DatePicker
         {/* Month navigation */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           {/* RTL: left = next month, right = prev month */}
+          {/* left = prev month (<) */}
           <button
             onClick={prevMonth}
             className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
           >
             <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
 
@@ -92,12 +93,13 @@ export default function DatePicker({ onSelect, selectedDate, title }: DatePicker
             {monthNames[viewMonth.getMonth()]} {viewMonth.getFullYear()}
           </h3>
 
+          {/* right = next month (>) */}
           <button
             onClick={nextMonth}
             className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
           >
             <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
         </div>

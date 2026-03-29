@@ -72,11 +72,12 @@ export default function Logo({
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 mt-0.5 hover:opacity-70 transition-opacity"
           >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2C7.03 2 3 6.03 3 11c0 2.1.72 4.03 1.93 5.57L12 22l7.07-5.43A8.96 8.96 0 0021 11c0-4.97-4.03-9-9-9zm0 4a3.5 3.5 0 110 7 3.5 3.5 0 010-7z" fill="#33CCFF"/>
-              <circle cx="10" cy="9.5" r="1" fill="#333"/>
-              <circle cx="14" cy="9.5" r="1" fill="#333"/>
-              <path d="M9.5 12.5c0 0 1 1.5 2.5 1.5s2.5-1.5 2.5-1.5" stroke="#333" strokeWidth="0.8" strokeLinecap="round" fill="none"/>
+            <svg className="w-4 h-4" viewBox="0 0 64 64" fill="none">
+              <path d="M32 4C21.5 4 13 12.5 13 23c0 6 2.7 11.4 7 15L32 60l12-22c4.3-3.6 7-9 7-15 0-10.5-8.5-19-19-19z" fill="#33CCFF" stroke="#00AADD" strokeWidth="2"/>
+              <circle cx="32" cy="23" r="8" fill="white"/>
+              <circle cx="28" cy="21" r="2" fill="#333"/>
+              <circle cx="36" cy="21" r="2" fill="#333"/>
+              <path d="M27 26c0 0 2 3 5 3s5-3 5-3" stroke="#333" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
             <span className="text-sm text-blue-400 font-medium">כפר אבו סנאן</span>
           </a>
