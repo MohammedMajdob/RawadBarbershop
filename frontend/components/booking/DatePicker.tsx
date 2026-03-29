@@ -142,7 +142,7 @@ export default function DatePicker({ onSelect, selectedDate, title }: DatePicker
                       ? 'bg-primary text-white shadow-md shadow-primary/30 scale-105'
                       : available && !past
                         ? 'bg-gray-50 text-foreground hover:bg-primary/10 hover:text-primary cursor-pointer'
-                        : isClosed
+                        : (isClosed || past)
                           ? 'text-gray-300 line-through cursor-not-allowed'
                           : 'text-gray-200 cursor-not-allowed'
                   }

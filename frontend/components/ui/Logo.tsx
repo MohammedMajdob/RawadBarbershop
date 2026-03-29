@@ -72,12 +72,20 @@ export default function Logo({
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 mt-0.5 hover:opacity-70 transition-opacity"
           >
-            <svg className="w-4 h-4" viewBox="0 0 64 64" fill="none">
-              <path d="M32 4C21.5 4 13 12.5 13 23c0 6 2.7 11.4 7 15L32 60l12-22c4.3-3.6 7-9 7-15 0-10.5-8.5-19-19-19z" fill="#33CCFF" stroke="#00AADD" strokeWidth="2"/>
-              <circle cx="32" cy="23" r="8" fill="white"/>
-              <circle cx="28" cy="21" r="2" fill="#333"/>
-              <circle cx="36" cy="21" r="2" fill="#333"/>
-              <path d="M27 26c0 0 2 3 5 3s5-3 5-3" stroke="#333" strokeWidth="1.5" strokeLinecap="round"/>
+            <svg className="w-5 h-5" viewBox="0 0 100 100" fill="none">
+              {/* Waze ghost body */}
+              <path d="M50 8C30 8 14 24 14 44c0 10 4 19 11 25.5l2 3L32 85l5-4 3 2c3 1.5 6.5 2.5 10 2.5s7-1 10-2.5l3-2 5 4 5-12.5 2-3C82 63 86 54 86 44 86 24 70 8 50 8z" fill="#33CCFF"/>
+              {/* Left eye */}
+              <ellipse cx="38" cy="42" rx="5" ry="6" fill="white"/>
+              <circle cx="39" cy="43" r="3" fill="#1a1a1a"/>
+              {/* Right eye */}
+              <ellipse cx="62" cy="42" rx="5" ry="6" fill="white"/>
+              <circle cx="63" cy="43" r="3" fill="#1a1a1a"/>
+              {/* Smile */}
+              <path d="M40 56c0 0 4 5 10 5s10-5 10-5" stroke="white" strokeWidth="3" strokeLinecap="round" fill="none"/>
+              {/* Antenna */}
+              <circle cx="72" cy="22" r="5" fill="#FF6B35"/>
+              <path d="M68 26L62 35" stroke="#FF6B35" strokeWidth="2.5" strokeLinecap="round"/>
             </svg>
             <span className="text-sm text-blue-400 font-medium">כפר אבו סנאן</span>
           </a>
