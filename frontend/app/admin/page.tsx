@@ -266,8 +266,9 @@ export default function AdminPage() {
       if (Date.now() - manualHoldStartRef.current > 120 * 1000) {
         clearInterval(interval);
         setManualHoldId(null);
-        setManualStep(1);
         setManualTime('');
+        setManualStep(1);
+        alert('פג תוקף ההזמנה הזמנית — בחר שעה מחדש');
         return;
       }
       if (document.visibilityState === 'visible') {
@@ -276,8 +277,9 @@ export default function AdminPage() {
         } catch {
           clearInterval(interval);
           setManualHoldId(null);
-          setManualStep(1);
           setManualTime('');
+          setManualStep(1);
+          alert('השמירה על השעה פגה — בחר שעה מחדש');
         }
       }
     }, 8000);
@@ -292,14 +294,14 @@ export default function AdminPage() {
     }
   };
 
-  const openManualBooking = () => {
+  const openManualBooking = async () => {
+    await releaseManualHold(); // release any existing hold before opening fresh
     setShowManualBooking(true);
     setManualStep(0);
     setManualDate('');
     setManualTime('');
     setManualName('');
     setManualPhone('');
-    setManualHoldId(null);
   };
 
   const closeManualBooking = async () => {
