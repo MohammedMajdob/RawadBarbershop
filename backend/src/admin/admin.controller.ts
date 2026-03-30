@@ -104,6 +104,11 @@ export class AdminController {
     return this.adminService.toggleProductImage(id);
   }
 
+  @Patch('products/reorder')
+  reorderProductImages(@Body() body: { ids: string[] }) {
+    return this.adminService.reorderProductImages(body.ids);
+  }
+
   @Delete('products/:id')
   deleteProductImage(@Param('id') id: string) {
     return this.adminService.deleteProductImage(id);

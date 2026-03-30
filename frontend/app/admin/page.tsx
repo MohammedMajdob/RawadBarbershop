@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  adminLogin,
+  adminSendOtp,
+  adminVerifyOtp,
   holdSlot,
   releaseHold,
   renewHold,
@@ -96,9 +97,14 @@ interface ProductImage {
 }
 
 export default function AdminPage() {
-  const [token, setToken] = useState('');
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [token, setToken] = useState(() => {
+    if (typeof window !== 'undefined') return localStorage.getItem('admin_token') || '';
+    return '';
+  });
+  const [adminPhone, setAdminPhone] = useState('');
+  const [adminOtp, setAdminOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState('');
 
   const [activeTab, setActiveTab] = useState<'bookings' | 'settings' | 'hero' | 'waitlist'>('bookings');
@@ -137,15 +143,34 @@ export default function AdminPage() {
   const [newProductTitle, setNewProductTitle] = useState('');
   const [productUploading, setProductUploading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSendAdminOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
+    setLoginLoading(true);
     try {
-      const result = await adminLogin(username, password);
-      setToken(result.accessToken);
+      await adminSendOtp(adminPhone);
+      setOtpSent(true);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'שגיאה לא ידועה';
       setLoginError(msg);
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleVerifyAdminOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError('');
+    setLoginLoading(true);
+    try {
+      const result = await adminVerifyOtp(adminPhone, adminOtp);
+      localStorage.setItem('admin_token', result.accessToken);
+      setToken(result.accessToken);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'קוד שגוי, נסה שוב';
+      setLoginError(msg);
+    } finally {
+      setLoginLoading(false);
     }
   };
 
@@ -551,31 +576,59 @@ export default function AdminPage() {
             <p className="text-muted text-sm mt-1">הזן את פרטי ההתחברות</p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="שם משתמש"
-              className="w-full px-4 py-3.5 rounded-xl border-2 border-border outline-none focus:border-primary text-right bg-card transition-colors"
-            />
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="סיסמה"
-              className="w-full px-4 py-3.5 rounded-xl border-2 border-border outline-none focus:border-primary text-right bg-card transition-colors"
-            />
-            {loginError && (
-              <p className="text-accent text-sm text-center font-medium">{loginError}</p>
-            )}
-            <button
-              type="submit"
-              className="w-full py-3.5 rounded-xl bg-primary text-white font-bold hover:bg-primary-dark shadow-lg shadow-primary/25 transition-all active:scale-[0.98]"
-            >
-              התחבר
-            </button>
-          </form>
+          {!otpSent ? (
+            <form onSubmit={handleSendAdminOtp} className="space-y-4">
+              <input
+                type="tel"
+                value={adminPhone}
+                onChange={(e) => setAdminPhone(e.target.value)}
+                placeholder="05X-XXXXXXX"
+                dir="ltr"
+                className="w-full px-4 py-3.5 rounded-xl border-2 border-border outline-none focus:border-primary text-left bg-card transition-colors"
+              />
+              {loginError && (
+                <p className="text-accent text-sm text-center font-medium">{loginError}</p>
+              )}
+              <button
+                type="submit"
+                disabled={!adminPhone || loginLoading}
+                className="w-full py-3.5 rounded-xl bg-primary text-white font-bold hover:bg-primary-dark shadow-lg shadow-primary/25 transition-all active:scale-[0.98] disabled:opacity-50"
+              >
+                {loginLoading ? 'שולח...' : 'שלח קוד'}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleVerifyAdminOtp} className="space-y-4">
+              <p className="text-sm text-muted text-center">קוד נשלח ל-{adminPhone}</p>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={adminOtp}
+                onChange={(e) => setAdminOtp(e.target.value)}
+                placeholder="הכנס קוד"
+                dir="ltr"
+                maxLength={6}
+                className="w-full px-4 py-3.5 rounded-xl border-2 border-border outline-none focus:border-primary text-center tracking-widest text-xl bg-card transition-colors"
+              />
+              {loginError && (
+                <p className="text-accent text-sm text-center font-medium">{loginError}</p>
+              )}
+              <button
+                type="submit"
+                disabled={adminOtp.length < 4 || loginLoading}
+                className="w-full py-3.5 rounded-xl bg-primary text-white font-bold hover:bg-primary-dark shadow-lg shadow-primary/25 transition-all active:scale-[0.98] disabled:opacity-50"
+              >
+                {loginLoading ? 'מאמת...' : 'התחבר'}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setOtpSent(false); setAdminOtp(''); setLoginError(''); }}
+                className="w-full text-sm text-muted hover:text-foreground transition-colors"
+              >
+                שנה מספר
+              </button>
+            </form>
+          )}
         </div>
       </div>
     );
@@ -600,7 +653,7 @@ export default function AdminPage() {
             </div>
           </div>
           <button
-            onClick={() => setToken('')}
+            onClick={() => { localStorage.removeItem('admin_token'); setToken(''); }}
             className="text-sm text-muted hover:text-accent font-medium transition-colors"
           >
             התנתק

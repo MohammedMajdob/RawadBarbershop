@@ -25,11 +25,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       return { ...customer, role: 'customer' };
     }
 
-    // Admin
-    const admin = await this.prisma.adminUser.findUnique({
-      where: { id: payload.sub },
-    });
-    if (!admin) return null;
-    return { ...admin, role: 'admin' };
+    if (payload.role === 'admin') {
+      // Admin is phone-based, no DB lookup needed
+      return { id: 'admin', role: 'admin' };
+    }
+
+    return null;
   }
 }

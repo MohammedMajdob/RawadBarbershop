@@ -148,12 +148,6 @@ export async function updateProfile(token: string, name: string) {
   });
 }
 
-export async function deleteProfile(token: string) {
-  return fetchApi('/auth/me', {
-    method: 'DELETE',
-    headers: customerHeaders(token),
-  });
-}
 
 // ─── Customer Bookings ─────────────────────────────────────────
 
@@ -192,10 +186,17 @@ export async function rescheduleMyBooking(
 
 // ─── Admin Auth ────────────────────────────────────────────────
 
-export async function adminLogin(username: string, password: string) {
-  return fetchApi('/auth/login', {
+export async function adminSendOtp(phone: string) {
+  return fetchApi('/auth/admin/send-otp', {
     method: 'POST',
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({ phone }),
+  });
+}
+
+export async function adminVerifyOtp(phone: string, code: string) {
+  return fetchApi('/auth/admin/verify-otp', {
+    method: 'POST',
+    body: JSON.stringify({ phone, code }),
   });
 }
 

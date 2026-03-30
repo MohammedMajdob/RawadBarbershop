@@ -84,6 +84,13 @@ export class BookingService {
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 3 * 60 * 1000); // 3 minutes for full flow
 
+    // Normalize phone to E.164 at entry point for consistent storage
+    const normalizedPhone = dto.phone.startsWith('+')
+      ? dto.phone
+      : dto.phone.startsWith('0')
+        ? `+972${dto.phone.slice(1)}`
+        : `+972${dto.phone}`;
+
     // Use transaction to prevent race conditions
     const booking = await this.prisma.$transaction(async (tx) => {
       // Remove any hold for this slot first
@@ -110,7 +117,7 @@ export class BookingService {
       return tx.booking.create({
         data: {
           name: dto.name,
-          phone: dto.phone,
+          phone: normalizedPhone,
           date: dto.date,
           time: dto.time,
           status: 'PENDING',
@@ -120,7 +127,7 @@ export class BookingService {
     });
 
     // Send OTP via Twilio Verify
-    await this.sms.sendOtp(dto.phone);
+    await this.sms.sendOtp(normalizedPhone);
 
     return {
       bookingId: booking.id,
@@ -159,21 +166,15 @@ export class BookingService {
       throw new BadRequestException('קוד אימות שגוי');
     }
 
-    // Normalize phone to E.164 for consistent storage
-    const normalizedPhone = booking.phone.startsWith('+')
-      ? booking.phone
-      : booking.phone.startsWith('0')
-        ? `+972${booking.phone.slice(1)}`
-        : `+972${booking.phone}`;
-
+    // Phone is already normalized (stored in E.164 by startBooking)
     // Find or create customer and link to booking
     let customer = await this.prisma.customer.findUnique({
-      where: { phone: normalizedPhone },
+      where: { phone: booking.phone },
     });
 
     if (!customer) {
       customer = await this.prisma.customer.create({
-        data: { phone: normalizedPhone, name: booking.name },
+        data: { phone: booking.phone, name: booking.name },
       });
     } else if (!customer.name && booking.name) {
       customer = await this.prisma.customer.update({
@@ -302,25 +303,38 @@ export class BookingService {
   async getMyBookings(customerId: string) {
     const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD local timezone
 
-    // Only show active (CONFIRMED) upcoming bookings to customers
-    const upcoming = await this.prisma.booking.findMany({
-      where: {
-        customerId,
-        status: 'CONFIRMED',
-        date: { gte: today },
-      },
-      orderBy: [{ date: 'asc' }, { time: 'asc' }],
-      select: {
-        id: true,
-        name: true,
-        date: true,
-        time: true,
-        status: true,
-        createdAt: true,
-      },
-    });
+    const fields = {
+      id: true,
+      name: true,
+      date: true,
+      time: true,
+      status: true,
+      createdAt: true,
+    };
 
-    return { upcoming, past: [] };
+    const [upcoming, past] = await Promise.all([
+      this.prisma.booking.findMany({
+        where: {
+          customerId,
+          status: 'CONFIRMED',
+          date: { gte: today },
+        },
+        orderBy: [{ date: 'asc' }, { time: 'asc' }],
+        select: fields,
+      }),
+      this.prisma.booking.findMany({
+        where: {
+          customerId,
+          status: { in: ['CONFIRMED', 'COMPLETED', 'CANCELLED'] },
+          date: { lt: today },
+        },
+        orderBy: [{ date: 'desc' }, { time: 'desc' }],
+        take: 10,
+        select: fields,
+      }),
+    ]);
+
+    return { upcoming, past };
   }
 
   // ─── Cancel own booking ────────────────────────────────────────

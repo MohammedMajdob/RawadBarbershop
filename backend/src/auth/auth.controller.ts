@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Patch, Delete, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Body, UseGuards, Request } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { SendOtpDto } from './dto/send-otp.dto';
@@ -8,11 +8,16 @@ import { VerifyOtpDto } from './dto/verify-otp.dto';
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  // ─── Admin Login (existing) ──────────────────────────────────
+  // ─── Admin OTP Login ─────────────────────────────────────────
 
-  @Post('login')
-  login(@Body() body: { username: string; password: string }) {
-    return this.authService.login(body.username, body.password);
+  @Post('admin/send-otp')
+  sendAdminOtp(@Body() body: { phone: string }) {
+    return this.authService.sendAdminOtp(body.phone);
+  }
+
+  @Post('admin/verify-otp')
+  verifyAdminOtp(@Body() body: { phone: string; code: string }) {
+    return this.authService.verifyAdminOtp(body.phone, body.code);
   }
 
   // ─── Customer OTP Authentication ─────────────────────────────
@@ -41,9 +46,4 @@ export class AuthController {
     return this.authService.updateCustomerName(req.user.id, body.name);
   }
 
-  @UseGuards(AuthGuard('jwt'))
-  @Delete('me')
-  deleteProfile(@Request() req: any) {
-    return this.authService.deleteCustomerProfile(req.user.id);
-  }
 }

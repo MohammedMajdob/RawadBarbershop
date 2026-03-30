@@ -10,13 +10,14 @@ import { SmsModule } from '../sms/sms.module';
 @Module({
   imports: [
     PassportModule,
+    ConfigModule,
     SmsModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         secret: config.get('JWT_SECRET'),
-        signOptions: { expiresIn: '100y' },
+        signOptions: { expiresIn: '100d' },
       }),
     }),
   ],

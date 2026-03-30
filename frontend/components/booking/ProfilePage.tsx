@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { updateProfile, deleteProfile } from '@/lib/api';
+import { updateProfile } from '@/lib/api';
 
 interface ProfilePageProps {
   token: string;
@@ -15,8 +15,6 @@ export default function ProfilePage({ token, profile, onProfileUpdate, onLogout,
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(profile.name || '');
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-
   const handleSave = async () => {
     if (!name.trim()) return;
     setSaving(true);
@@ -29,20 +27,6 @@ export default function ProfilePage({ token, profile, onProfileUpdate, onLogout,
       alert(message);
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!confirm('האם אתה בטוח שברצונך למחוק את הפרופיל? כל התורים העתידיים יבוטלו.')) return;
-    setDeleting(true);
-    try {
-      await deleteProfile(token);
-      onLogout();
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'שגיאה במחיקת הפרופיל';
-      alert(message);
-    } finally {
-      setDeleting(false);
     }
   };
 
@@ -130,16 +114,6 @@ export default function ProfilePage({ token, profile, onProfileUpdate, onLogout,
         </button>
       </div>
 
-      {/* Delete Profile */}
-      <div className="text-center mt-12">
-        <button
-          onClick={handleDelete}
-          disabled={deleting}
-          className="text-accent font-semibold text-sm hover:underline disabled:opacity-50"
-        >
-          {deleting ? 'מוחק...' : 'מחיקת פרופיל'}
-        </button>
-      </div>
     </div>
   );
 }

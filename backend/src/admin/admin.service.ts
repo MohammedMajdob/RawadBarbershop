@@ -287,6 +287,17 @@ export class AdminService {
     return this.prisma.productImage.delete({ where: { id } });
   }
 
+  async reorderProductImages(ids: string[]) {
+    const updates = ids.map((id, index) =>
+      this.prisma.productImage.update({
+        where: { id },
+        data: { order: index },
+      }),
+    );
+    await this.prisma.$transaction(updates);
+    return this.getProductImages(true);
+  }
+
   // ── Waitlist ───────────────────────────────────────────
 
   async getWaitlist() {

@@ -5,45 +5,56 @@ import {
   Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { SmsService } from '../sms/sms.service';
-import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
+  private readonly adminPhones: Set<string>;
 
   constructor(
     private prisma: PrismaService,
     private jwt: JwtService,
     private smsService: SmsService,
-  ) {}
-
-  // ─── Admin Login (existing) ──────────────────────────────────
-
-  async login(username: string, password: string) {
-    const admin = await this.prisma.adminUser.findUnique({
-      where: { username },
-    });
-
-    if (!admin) {
-      throw new UnauthorizedException('שם משתמש או סיסמה שגויים');
-    }
-
-    const valid = await bcrypt.compare(password, admin.password);
-    if (!valid) {
-      throw new UnauthorizedException('שם משתמש או סיסמה שגויים');
-    }
-
-    const token = this.jwt.sign({ sub: admin.id, username: admin.username });
-
-    return { accessToken: token };
+    private config: ConfigService,
+  ) {
+    const raw = this.config.get<string>('ADMIN_PHONES') || '+972502763455,+972504775336';
+    this.adminPhones = new Set(raw.split(',').map((p) => p.trim()));
   }
 
-  async validateUser(payload: { sub: string }) {
-    return this.prisma.adminUser.findUnique({
-      where: { id: payload.sub },
-    });
+  private normalizePhone(phone: string): string {
+    if (phone.startsWith('+')) return phone;
+    if (phone.startsWith('0')) return `+972${phone.slice(1)}`;
+    return `+972${phone}`;
+  }
+
+  // ─── Admin OTP Login ──────────────────────────────────────────
+
+  async sendAdminOtp(phone: string): Promise<{ message: string }> {
+    const normalized = this.normalizePhone(phone);
+    if (!this.adminPhones.has(normalized)) {
+      throw new UnauthorizedException('מספר לא מורשה');
+    }
+    const sent = await this.smsService.sendOtp(normalized);
+    if (!sent) {
+      throw new InternalServerErrorException('שגיאה בשליחת הקוד, נסה שוב');
+    }
+    return { message: 'קוד נשלח' };
+  }
+
+  async verifyAdminOtp(phone: string, code: string): Promise<{ accessToken: string }> {
+    const normalized = this.normalizePhone(phone);
+    if (!this.adminPhones.has(normalized)) {
+      throw new UnauthorizedException('מספר לא מורשה');
+    }
+    const isValid = await this.smsService.checkOtp(normalized, code);
+    if (!isValid) {
+      throw new UnauthorizedException('קוד שגוי או פג תוקף');
+    }
+    const token = this.jwt.sign({ sub: 'admin', role: 'admin' });
+    return { accessToken: token };
   }
 
   // ─── Customer OTP Authentication ─────────────────────────────
