@@ -1,15 +1,12 @@
 import {
   Injectable,
   UnauthorizedException,
-  HttpException,
-  HttpStatus,
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { SmsService } from '../sms/sms.service';
-import { OtpStoreService } from './otp-store.service';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -20,7 +17,6 @@ export class AuthService {
     private prisma: PrismaService,
     private jwt: JwtService,
     private smsService: SmsService,
-    private otpStore: OtpStoreService,
   ) {}
 
   // ─── Admin Login (existing) ──────────────────────────────────
@@ -53,20 +49,7 @@ export class AuthService {
   // ─── Customer OTP Authentication ─────────────────────────────
 
   async sendOtp(phone: string): Promise<{ message: string }> {
-    // Rate limit check
-    if (this.otpStore.isRateLimited(phone)) {
-      throw new HttpException(
-        'Too many OTP requests. Please wait 1 minute before trying again.',
-        HttpStatus.TOO_MANY_REQUESTS,
-      );
-    }
-
-    // Generate and store OTP
-    const otp = this.smsService.generateOtp();
-    await this.otpStore.storeOtp(phone, otp);
-
-    // Send via WhatsApp (with SMS fallback)
-    const sent = await this.smsService.sendOtp(phone, otp);
+    const sent = await this.smsService.sendOtp(phone);
     if (!sent) {
       throw new InternalServerErrorException(
         'Failed to send OTP. Please try again later.',
@@ -81,7 +64,7 @@ export class AuthService {
     phone: string,
     code: string,
   ): Promise<{ accessToken: string; isNewUser: boolean }> {
-    const isValid = await this.otpStore.verifyOtp(phone, code);
+    const isValid = await this.smsService.checkOtp(phone, code);
 
     if (!isValid) {
       throw new UnauthorizedException('Invalid or expired OTP');

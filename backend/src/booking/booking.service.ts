@@ -81,10 +81,8 @@ export class BookingService {
   // ─── Original flow: start booking with OTP ─────────────────────
 
   async startBooking(dto: StartBookingDto) {
-    const otpCode = this.sms.generateOtp();
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 3 * 60 * 1000); // 3 minutes for full flow
-    const otpExpiry = new Date(now.getTime() + 3 * 60 * 1000); // 3 minutes for OTP
 
     // Use transaction to prevent race conditions
     const booking = await this.prisma.$transaction(async (tx) => {
@@ -116,15 +114,13 @@ export class BookingService {
           date: dto.date,
           time: dto.time,
           status: 'PENDING',
-          otpCode,
-          otpExpiry,
           expiresAt,
         },
       });
     });
 
-    // Send OTP
-    await this.sms.sendOtp(dto.phone, otpCode);
+    // Send OTP via Twilio Verify
+    await this.sms.sendOtp(dto.phone);
 
     return {
       bookingId: booking.id,
@@ -157,11 +153,9 @@ export class BookingService {
       throw new BadRequestException('ההזמנה פגה תוקף, נסה שוב');
     }
 
-    if (booking.otpExpiry && new Date() > booking.otpExpiry) {
-      throw new BadRequestException('קוד האימות פג תוקף');
-    }
-
-    if (booking.otpCode !== dto.otpCode) {
+    // Verify OTP via Twilio Verify
+    const isValid = await this.sms.checkOtp(booking.phone, dto.otpCode);
+    if (!isValid) {
       throw new BadRequestException('קוד אימות שגוי');
     }
 

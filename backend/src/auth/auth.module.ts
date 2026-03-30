@@ -5,7 +5,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
-import { OtpStoreService } from './otp-store.service';
 import { SmsModule } from '../sms/sms.module';
 
 @Module({
@@ -22,7 +21,7 @@ import { SmsModule } from '../sms/sms.module';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, OtpStoreService],
+  providers: [AuthService, JwtStrategy],
   exports: [AuthService, JwtModule],
 })
 export class AuthModule {}
