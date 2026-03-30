@@ -1,8 +1,10 @@
 import { Controller, Get, Post, Delete, Query, Header, Body, Param } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { AvailabilityService } from './availability.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { JoinWaitlistDto } from './dto/join-waitlist.dto';
 
+@SkipThrottle() // Public read endpoints — polled frequently by frontend
 @Controller('availability')
 export class AvailabilityController {
   constructor(

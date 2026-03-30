@@ -10,10 +10,12 @@ import {
   Request,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { SkipThrottle } from '@nestjs/throttler';
 import { BookingService } from './booking.service';
 import { StartBookingDto } from './dto/start-booking.dto';
 import { VerifyBookingDto } from './dto/verify-booking.dto';
 
+@SkipThrottle() // hold/renew called every 8s — exempt from global rate limit
 @Controller('booking')
 export class BookingController {
   constructor(private bookingService: BookingService) {}
