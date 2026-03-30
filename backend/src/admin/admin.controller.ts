@@ -10,10 +10,12 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { AdminGuard } from '../auth/admin.guard';
 import { AdminService } from './admin.service';
+import { ManualBookingDto } from './dto/manual-booking.dto';
 
 @Controller('admin')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), AdminGuard)
 export class AdminController {
   constructor(private adminService: AdminService) {}
 
@@ -32,10 +34,8 @@ export class AdminController {
   }
 
   @Post('bookings/manual')
-  createManualBooking(
-    @Body() body: { date: string; time: string; name: string; phone: string },
-  ) {
-    return this.adminService.createManualBooking(body);
+  createManualBooking(@Body() dto: ManualBookingDto) {
+    return this.adminService.createManualBooking(dto);
   }
 
   @Delete('bookings/:id')

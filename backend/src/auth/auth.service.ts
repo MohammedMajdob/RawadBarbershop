@@ -20,7 +20,8 @@ export class AuthService {
     private smsService: SmsService,
     private config: ConfigService,
   ) {
-    const raw = this.config.get<string>('ADMIN_PHONES') || '+972502763455,+972504775336';
+    const raw = this.config.get<string>('ADMIN_PHONES');
+    if (!raw) throw new Error('ADMIN_PHONES env variable is required');
     this.adminPhones = new Set(raw.split(',').map((p) => p.trim()));
   }
 

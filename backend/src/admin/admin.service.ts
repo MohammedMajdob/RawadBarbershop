@@ -199,10 +199,15 @@ export class AdminService {
   }
 
   async updateSettings(data: Record<string, unknown>) {
+    const ALLOWED_FIELDS = new Set([
+      'businessName', 'phone', 'price', 'duration', 'advanceBookingDays',
+      'schedule', 'blockedDates', 'headerType', 'headerMediaUrl', 'logoUrl',
+    ]);
+
     const updateData: Record<string, unknown> = {};
-    if (data) {
-      for (const [key, value] of Object.entries(data)) {
-        if (value !== undefined) updateData[key] = value;
+    for (const [key, value] of Object.entries(data)) {
+      if (ALLOWED_FIELDS.has(key) && value !== undefined) {
+        updateData[key] = value;
       }
     }
 

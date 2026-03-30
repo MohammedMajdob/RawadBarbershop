@@ -12,22 +12,25 @@ async function bootstrap() {
   app.use(json({ limit: '10mb' }));
   app.use(urlencoded({ extended: true, limit: '10mb' }));
 
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'https://www.gentlemen1996.co.il',
+    'https://gentlemen1996.co.il',
+    process.env.FRONTEND_URL,
+  ].filter(Boolean) as string[];
+
   app.enableCors({
     origin: (origin, callback) => {
-      const allowed = [
-        'http://localhost:3000',
-        'http://localhost:3001',
-        'https://www.gentlemen1996.co.il',
-        'https://gentlemen1996.co.il',
-        process.env.FRONTEND_URL,
-      ].filter(Boolean);
-
-      // Allow Vercel preview deployments
-      if (!origin || allowed.includes(origin) || /\.vercel\.app$/.test(origin)) {
-        callback(null, true);
-      } else {
-        callback(null, false);
+      // Block requests with no origin (non-browser clients) in production
+      if (!origin) {
+        const isProd = process.env.NODE_ENV === 'production';
+        return callback(null, !isProd);
       }
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      callback(null, false);
     },
     credentials: true,
   });
