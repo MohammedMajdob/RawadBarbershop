@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Delete, Query, Header, Body, Param } from '@nestjs/common';
 import { AvailabilityService } from './availability.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { JoinWaitlistDto } from './dto/join-waitlist.dto';
 
 @Controller('availability')
 export class AvailabilityController {
@@ -67,15 +68,13 @@ export class AvailabilityController {
   }
 
   @Post('waitlist')
-  joinWaitlist(
-    @Body() body: { name: string; phone: string; preferredDate?: string; note?: string },
-  ) {
+  joinWaitlist(@Body() dto: JoinWaitlistDto) {
     return this.prisma.waitlistEntry.create({
       data: {
-        name: body.name,
-        phone: body.phone,
-        preferredDate: body.preferredDate || null,
-        note: body.note || null,
+        name: dto.name,
+        phone: dto.phone,
+        preferredDate: dto.preferredDate || null,
+        note: dto.note || null,
       },
     });
   }

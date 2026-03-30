@@ -13,6 +13,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from '../auth/admin.guard';
 import { AdminService } from './admin.service';
 import { ManualBookingDto } from './dto/manual-booking.dto';
+import { AddImageDto, ReorderDto } from './dto/image.dto';
 
 @Controller('admin')
 @UseGuards(AuthGuard('jwt'), AdminGuard)
@@ -68,8 +69,8 @@ export class AdminController {
   }
 
   @Post('hero')
-  addHeroImage(@Body() body: { url: string; title?: string }) {
-    return this.adminService.addHeroImage(body.url, body.title);
+  addHeroImage(@Body() dto: AddImageDto) {
+    return this.adminService.addHeroImage(dto.url, dto.title);
   }
 
   @Patch('hero/:id/toggle')
@@ -78,8 +79,8 @@ export class AdminController {
   }
 
   @Patch('hero/reorder')
-  reorderHeroImages(@Body() body: { ids: string[] }) {
-    return this.adminService.reorderHeroImages(body.ids);
+  reorderHeroImages(@Body() dto: ReorderDto) {
+    return this.adminService.reorderHeroImages(dto.ids);
   }
 
   @Delete('hero/:id')
@@ -95,8 +96,8 @@ export class AdminController {
   }
 
   @Post('products')
-  addProductImage(@Body() body: { url: string; title?: string }) {
-    return this.adminService.addProductImage(body.url, body.title);
+  addProductImage(@Body() dto: AddImageDto) {
+    return this.adminService.addProductImage(dto.url, dto.title);
   }
 
   @Patch('products/:id/toggle')
@@ -105,8 +106,8 @@ export class AdminController {
   }
 
   @Patch('products/reorder')
-  reorderProductImages(@Body() body: { ids: string[] }) {
-    return this.adminService.reorderProductImages(body.ids);
+  reorderProductImages(@Body() dto: ReorderDto) {
+    return this.adminService.reorderProductImages(dto.ids);
   }
 
   @Delete('products/:id')
