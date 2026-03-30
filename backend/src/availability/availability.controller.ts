@@ -45,6 +45,7 @@ export class AvailabilityController {
         headerType: true,
         headerMediaUrl: true,
         logoUrl: true,
+        announcementText: true,
       },
     });
     return (

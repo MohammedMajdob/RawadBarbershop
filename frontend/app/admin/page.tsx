@@ -60,6 +60,7 @@ type Schedule = Record<string, DaySchedule>;
 
 interface Settings {
   businessName: string;
+  announcementText?: string;
   phone: string;
   price: number;
   duration: number;
@@ -1001,6 +1002,18 @@ export default function AdminPage() {
                     className="w-full px-3 py-2.5 border-2 border-border rounded-xl outline-none focus:border-primary text-sm bg-card transition-colors"
                     dir="ltr"
                   />
+                </div>
+                <div>
+                  <label className="text-xs text-muted block mb-1.5 font-medium">הודעה ללקוחות (מתחת לשלבי ההזמנה)</label>
+                  <textarea
+                    value={settings.announcementText || ''}
+                    onChange={(e) => setSettings({ ...settings, announcementText: e.target.value })}
+                    onBlur={(e) => handleUpdateGeneralSettings('announcementText', e.target.value)}
+                    placeholder="לדוגמה: תורים זמינים רק ביום רביעי השבוע"
+                    rows={2}
+                    className="w-full px-3 py-2.5 border-2 border-border rounded-xl outline-none focus:border-primary text-sm bg-card transition-colors text-right resize-none"
+                  />
+                  <p className="text-xs text-muted mt-1">השאר ריק כדי להסתיר את ההודעה</p>
                 </div>
                 <div className="flex gap-3">
                   <div className="flex-1">

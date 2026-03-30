@@ -201,7 +201,7 @@ export class AdminService {
   async updateSettings(data: Record<string, unknown>) {
     const ALLOWED_FIELDS = new Set([
       'businessName', 'phone', 'price', 'duration', 'advanceBookingDays',
-      'schedule', 'blockedDates', 'headerType', 'headerMediaUrl', 'logoUrl',
+      'schedule', 'blockedDates', 'headerType', 'headerMediaUrl', 'logoUrl', 'announcementText',
     ]);
 
     const updateData: Record<string, unknown> = {};

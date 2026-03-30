@@ -49,6 +49,7 @@ model Settings {
   headerType         String   @default("image")
   headerMediaUrl     String?
   logoUrl            String?
+  announcementText   String?  // optional message shown below stepper on booking page
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 }
