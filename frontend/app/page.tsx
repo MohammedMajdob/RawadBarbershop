@@ -391,50 +391,20 @@ export default function Home() {
       {/* Content */}
       <div className="flex-1 max-w-3xl w-full mx-auto px-4 py-8">
         {step === 0 && (
-          <>
-            <DatePicker
-              onSelect={handleDateSelect}
-              selectedDate={selectedDate}
-              title={rescheduleId ? 'בחר תאריך חדש' : undefined}
-            />
-            {!rescheduleId && (
-              <div className="mt-4 flex justify-center">
-                <button
-                  onClick={() => setShowWaitlist(true)}
-                  className="flex items-center gap-2 text-sm font-semibold text-primary/80 bg-primary/8 hover:bg-primary/15 px-4 py-2.5 rounded-xl border border-primary/20 transition-all"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  לא מצאת תור? הצטרף לרשימת המתנה
-                </button>
-              </div>
-            )}
-          </>
+          <DatePicker
+            onSelect={handleDateSelect}
+            selectedDate={selectedDate}
+            title={rescheduleId ? 'בחר תאריך חדש' : undefined}
+          />
         )}
 
         {step === 1 && (
-          <>
-            <TimePicker
-              date={selectedDate}
-              onSelect={handleTimeSelect}
-              selectedTime={selectedTime}
-              title={rescheduleId ? 'בחר שעה חדשה' : undefined}
-            />
-            {!rescheduleId && (
-              <div className="mt-3 flex justify-center">
-                <button
-                  onClick={() => setShowWaitlist(true)}
-                  className="flex items-center gap-2 text-sm font-semibold text-primary/80 bg-primary/8 hover:bg-primary/15 px-4 py-2.5 rounded-xl border border-primary/20 transition-all"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  לא מצאת שעה? הצטרף לרשימת המתנה
-                </button>
-              </div>
-            )}
-          </>
+          <TimePicker
+            date={selectedDate}
+            onSelect={handleTimeSelect}
+            selectedTime={selectedTime}
+            title={rescheduleId ? 'בחר שעה חדשה' : undefined}
+          />
         )}
 
         {step === 2 && isAuthenticated ? (
@@ -487,46 +457,59 @@ export default function Home() {
       {/* Step navigation buttons */}
       {step < 4 && (
         <div className="bg-card border-t border-border px-4 py-3">
-          <div className="max-w-3xl mx-auto flex gap-3">
-            {/* Continue button - only on steps 0-1 */}
-            {step < 2 && (
-              <button
-                onClick={goNext}
-                disabled={!canGoNext || holdLoading}
-                className={`
-                  flex-1 py-3.5 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all duration-200
-                  ${canGoNext && !holdLoading
-                    ? 'bg-primary text-white shadow-lg shadow-primary/25 hover:bg-primary-dark active:scale-[0.98]'
-                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  }
-                `}
-              >
-                {holdLoading ? (
-                  <span className="flex items-center gap-2">
-                    <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    בודק זמינות...
-                  </span>
-                ) : (
-                  <>
-                    <span>המשך</span>
-                    <svg className="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </>
-                )}
-              </button>
-            )}
+          <div className="max-w-3xl mx-auto flex flex-col gap-2">
+            {/* Continue + Back */}
+            <div className="flex gap-3">
+              {step < 2 && (
+                <button
+                  onClick={goNext}
+                  disabled={!canGoNext || holdLoading}
+                  className={`
+                    flex-1 py-3.5 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all duration-200
+                    ${canGoNext && !holdLoading
+                      ? 'bg-primary text-white shadow-lg shadow-primary/25 hover:bg-primary-dark active:scale-[0.98]'
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    }
+                  `}
+                >
+                  {holdLoading ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      בודק זמינות...
+                    </span>
+                  ) : (
+                    <>
+                      <span>המשך</span>
+                      <svg className="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </>
+                  )}
+                </button>
+              )}
+              {step > 0 && (
+                <button
+                  onClick={goBack}
+                  className="flex-1 py-3.5 rounded-xl font-bold text-base border-2 border-border text-foreground flex items-center justify-center gap-2 hover:bg-gray-50 transition-all duration-200 active:scale-[0.98]"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  <span>חזור</span>
+                </button>
+              )}
+            </div>
 
-            {/* Back button - on all steps except 0 */}
-            {step > 0 && (
+            {/* Waitlist button — below continue, steps 0-1 only */}
+            {step < 2 && !rescheduleId && (
               <button
-                onClick={goBack}
-                className="flex-1 py-3.5 rounded-xl font-bold text-base border-2 border-border text-foreground flex items-center justify-center gap-2 hover:bg-gray-50 transition-all duration-200 active:scale-[0.98]"
+                onClick={() => setShowWaitlist(true)}
+                className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-primary/80 bg-primary/8 hover:bg-primary/15 px-4 py-2.5 rounded-xl border border-primary/20 transition-all"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span>חזור</span>
+                {step === 0 ? 'לא מצאת תור? הצטרף לרשימת המתנה' : 'לא מצאת שעה? הצטרף לרשימת המתנה'}
               </button>
             )}
           </div>
