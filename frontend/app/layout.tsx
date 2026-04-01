@@ -8,8 +8,17 @@ const geist = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "RAWAD BARBERSHOP | הזמנת תור",
+  title: "Gentleman Barbershop | הזמנת תור",
   description: "חווית טיפוח יוקרתית | תספורות ברמה הגבוהה ביותר",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Gentleman",
+  },
+  icons: {
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({
@@ -19,6 +28,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="he" dir="rtl" className={`${geist.variable} h-full antialiased`}>
+      <head>
+        <meta name="theme-color" content="#c9a84c" />
+        <meta name="mobile-web-app-capable" content="yes" />
+      </head>
       <body className="min-h-full flex flex-col font-[family-name:var(--font-geist)]">
         {children}
       </body>
