@@ -1,8 +1,10 @@
-import { IsString, IsNotEmpty, Matches } from 'class-validator';
+import { IsString, IsNotEmpty, Matches, MinLength } from 'class-validator';
 
 export class StartBookingDto {
   @IsString()
   @IsNotEmpty()
+  @MinLength(3, { message: 'נא להזין שם ומשפחה' })
+  @Matches(/^[\p{L}]+(\s[\p{L}]+)+$/u, { message: 'נא להזין שם ומשפחה' })
   name: string;
 
   @IsString()

@@ -22,6 +22,7 @@ export default function DetailsForm({ date, time, onSubmit, loading }: DetailsFo
   const validate = () => {
     const newErrors: typeof errors = {};
     if (!name.trim()) newErrors.name = 'נא להזין שם מלא';
+    else if (name.trim().split(/\s+/).length < 2) newErrors.name = 'נא להזין שם ומשפחה';
     if (!/^05\d{8}$/.test(phone)) newErrors.phone = 'מספר טלפון לא תקין (05XXXXXXXX)';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;

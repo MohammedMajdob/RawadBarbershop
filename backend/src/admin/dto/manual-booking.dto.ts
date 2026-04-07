@@ -4,6 +4,7 @@ export class ManualBookingDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
+  @Matches(/^[\p{L}]+(\s[\p{L}]+)+$/u, { message: 'נא להזין שם ומשפחה' })
   name: string;
 
   @IsString()
