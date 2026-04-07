@@ -46,6 +46,10 @@ export default function WaitlistModal({
       setError('נא למלא שם ומספר טלפון');
       return;
     }
+    if (!isAuthenticated && name.trim().split(/\s+/).length < 2) {
+      setError('נא להזין שם ומשפחה');
+      return;
+    }
     setLoading(true);
     setError('');
     try {

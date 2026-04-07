@@ -16,7 +16,10 @@ export default function ProfilePage({ token, profile, onProfileUpdate, onLogout,
   const [name, setName] = useState(profile.name || '');
   const [saving, setSaving] = useState(false);
   const handleSave = async () => {
-    if (!name.trim()) return;
+    if (!name.trim() || name.trim().split(/\s+/).length < 2) {
+      alert('נא להזין שם ומשפחה');
+      return;
+    }
     setSaving(true);
     try {
       const updated = await updateProfile(token, name.trim());

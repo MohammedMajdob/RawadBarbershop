@@ -126,7 +126,11 @@ export default function LoginPrompt({ onAuthenticated, title, subtitle }: LoginP
   const handleSetName = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      setNameError('נא להזין שם מלא');
+      setNameError('נא להזין שם ומשפחה');
+      return;
+    }
+    if (name.trim().split(/\s+/).length < 2) {
+      setNameError('נא להזין שם ומשפחה');
       return;
     }
     setNameError('');
