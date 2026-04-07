@@ -7,7 +7,7 @@ export class JoinWaitlistDto {
   name: string;
 
   @IsString()
-  @Matches(/^0\d{9}$/, { message: 'מספר טלפון לא תקין' })
+  @Matches(/^(0\d{9}|\+972\d{9})$/, { message: 'מספר טלפון לא תקין' })
   phone: string;
 
   @IsOptional()
