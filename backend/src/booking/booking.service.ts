@@ -9,6 +9,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { SmsService } from '../sms/sms.service';
+import { PushService } from '../push/push.service';
 import { StartBookingDto } from './dto/start-booking.dto';
 import { VerifyBookingDto } from './dto/verify-booking.dto';
 
@@ -20,6 +21,7 @@ export class BookingService {
     private prisma: PrismaService,
     private sms: SmsService,
     private jwt: JwtService,
+    private push: PushService,
   ) {}
 
   // ─── Hold a slot temporarily (3 min) ────────────────────────────
@@ -360,6 +362,14 @@ export class BookingService {
       where: { id: bookingId },
       data: { status: 'CANCELLED', cancelledBy: 'customer' },
     });
+
+    this.push
+      .notifyAdmins({
+        title: 'תור בוטל',
+        message: `${updated.name} ביטל/ה את התור ליום ${updated.date} בשעה ${updated.time}`,
+        url: 'https://www.gentlemen1996.co.il/admin',
+      })
+      .catch((err) => this.logger.warn(`Failed to push cancel notification: ${err.message}`));
 
     return {
       message: 'התור בוטל בהצלחה',

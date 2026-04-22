@@ -29,6 +29,7 @@ import {
 } from '@/lib/api';
 import DatePicker from '@/components/booking/DatePicker';
 import TimePicker from '@/components/booking/TimePicker';
+import AdminPushNotifications from '@/components/admin/AdminPushNotifications';
 
 const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 const allDays = [0, 1, 2, 3, 4, 5, 6];
@@ -640,6 +641,7 @@ export default function AdminPage() {
   // Dashboard
   return (
     <div className="min-h-screen bg-background">
+      <AdminPushNotifications />
       {/* Header */}
       <header className="bg-card border-b border-border sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
