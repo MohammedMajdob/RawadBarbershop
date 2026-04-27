@@ -27,7 +27,7 @@ export class AuthController {
 
   // ─── Customer OTP Authentication ─────────────────────────────
 
-  @Throttle({ default: { ttl: 3600000, limit: 5 } }) // 5 per hour
+  @Throttle({ default: { ttl: 3600000, limit: 5 } }) // 5 per hour per IP
   @Post('send-otp')
   sendOtp(@Body() dto: SendOtpDto) {
     return this.authService.sendOtp(dto.phone);
